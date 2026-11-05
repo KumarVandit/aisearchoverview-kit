@@ -20,6 +20,17 @@ describe('public Overview SDK', () => {
     expect(fetcher).not.toHaveBeenCalled();
     expect(client).not.toHaveProperty('monitor');
   });
+  it('preserves actual inline citation groups and their source positions in the public SDK', () => {
+    const result = sdk().overview.parse(loadNestedFixture('google-search', 'aio-sky-expanded.html'), { sourceUrl });
+    if (result.status !== 'present') throw new Error('Expected captured answer');
+    expect(result.citationPills?.length).toBeGreaterThan(0);
+    for (const pill of result.citationPills ?? []) {
+      expect(result.sources[pill.position - 1]?.url).toBe(pill.url);
+      expect(pill.citationPillId).toBeGreaterThan(0);
+    }
+    const simple = sdk().overview.parse(html, { sourceUrl });
+    expect(simple).not.toHaveProperty('citationPills');
+  });
   it('uses custom HTTP and locale options with one request and opt-out Markdown', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(html));
     const result = await sdk({ fetch: fetcher, locale: { country: 'GB', language: 'en' } }).overview.get('why is the sky blue', { markdown: false });

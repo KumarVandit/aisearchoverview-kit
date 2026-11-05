@@ -6,6 +6,15 @@ export interface OverviewSource {
   redirectUrl?: string;
 }
 
+export interface OverviewCitationPill {
+  citationPillId: number;
+  /** One-based position in the sources array; not a sentence offset. */
+  position: number;
+  label: string;
+  url: string;
+  domain: string;
+}
+
 export interface OverviewMetadata {
   country: string;
   language: string;
@@ -24,7 +33,7 @@ interface OverviewBase {
   metadata: OverviewMetadata;
 }
 
-export type OverviewResult = (OverviewBase & { status: 'present'; text: string; markdown?: string })
+export type OverviewResult = (OverviewBase & { status: 'present'; text: string; markdown?: string; citationPills?: OverviewCitationPill[] })
   | (OverviewBase & { status: 'blocked' | 'unverified'; text?: never; markdown?: never });
 
 export interface OverviewOptions {

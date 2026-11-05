@@ -95,6 +95,6 @@ npm test
 
 Default tests are offline. `npm run test:live` opts into network probes; an access-state observation is not a successful Overview benchmark. Python driver tests use `python runtime/test_fetch.py` in an environment with the pinned HTTP client installed. Native input tests are available through Cargo after setup/source preparation.
 
-[API and types](docs/api.md) · [Architecture](docs/architecture.md) · [Advanced controls](docs/advanced.md) · [Research evidence](docs/google-search-research.md)
+[Layout coverage audit](docs/layout-coverage.md) · [API and types](docs/api.md) · [Architecture](docs/architecture.md) · [Advanced controls](docs/advanced.md) · [Research evidence](docs/google-search-research.md)
 
 MIT for this SDK and adapter. The fetched engine, HTTP client and Rust dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md). No Google affiliation is implied.

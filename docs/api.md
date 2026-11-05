@@ -52,3 +52,10 @@ Returns a copied source list, resolved count and warnings. Only HTTPS `www.googl
 ## Errors
 
 `AiSearchError` has `kind: 'configuration' | 'validation' | 'network' | 'http' | 'parse' | 'timeout'` and optional HTTP `status`. A missing native runtime is a configuration error with the setup command. Access challenges and unsupported layouts remain explicit result states. Automatic retries are not performed.
+
+
+## Citation groups and content formatting
+
+Present results can include `citationPills` when recognized inline citation markup supplies them. Each `OverviewCitationPill` has `citationPillId`, `position`, `label`, `url` and `domain`. `position` is a one-based index into `sources`, not a sentence offset. Simplified responses may omit the array.
+
+Markdown preserves code blocks and basic tables in supplied semantic HTML. This does not guarantee the HTTP session receives those richer layouts. Structured related links, video cards, places, maps and AIO ads are not implemented. See the [layout audit](layout-coverage.md) for real versus synthetic coverage and current limitations.
