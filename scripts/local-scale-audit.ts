@@ -1,0 +1,30 @@
+import {mkdir,writeFile} from 'node:fs/promises';
+import {dirname,resolve} from 'node:path';
+import {coordinatedSearchFetch} from '../src/transport/coordinator.js';
+
+const flag=process.argv.indexOf('--output');if(flag<0||!process.argv[flag+1])throw new Error('Pass --output PATH for this offline synthetic audit. No network requests are made.');
+const output=resolve(process.argv[flag+1]!);await mkdir(dirname(output),{recursive:true});
+const count=10000,maximum=4,target='https://www.google.com/search?q=synthetic-local-only';
+// A minimal Response double isolates queue scheduling from network and stream costs.
+const response=(status=200,body='synthetic')=>({status,headers:new Headers(),clone:()=>({text:async()=>body})}) as Response;
+const began=performance.now();let starts=0,active=0,peak=0;
+const upstream:typeof fetch=async()=>{starts++;peak=Math.max(peak,++active);await Promise.resolve();active--;return response();};
+const coordinated=coordinatedSearchFetch(upstream,{maxConcurrent:maximum,minIntervalMs:0});
+const successes=await Promise.all(Array.from({length:count},()=>coordinated(target)));
+const queue={submitted:count,upstreamStarts:starts,fulfilled:successes.length,peakActive:peak,configuredMaxConcurrent:maximum,intervalMs:0};
+let denialStarts=0;
+const denying=coordinatedSearchFetch(async()=>{const index=denialStarts++;await Promise.resolve();return response(index===0?429:200);},{maxConcurrent:maximum,minIntervalMs:0,cooldownMs:60000});
+const denied=await Promise.allSettled(Array.from({length:count},()=>denying(target)));
+const denial={submitted:count,upstreamStarts:denialStarts,fulfilled:denied.filter(result=>result.status==='fulfilled').length,rejected:denied.filter(result=>result.status==='rejected').length};
+let cancellationStarts=0,release!:()=>void;
+const pending=new Promise<void>(resolve=>{release=resolve;});
+const cancellable=coordinatedSearchFetch(async()=>{cancellationStarts++;await pending;return response();},{maxConcurrent:maximum,minIntervalMs:0});
+const first=Array.from({length:maximum},()=>cancellable(target));
+const controllers=Array.from({length:count-maximum},()=>new AbortController());
+const queued=controllers.map(controller=>cancellable(target,{signal:controller.signal}));
+const cancellationResults=Promise.allSettled([...first,...queued]);for(const controller of controllers)controller.abort(new Error('synthetic cancellation'));release();
+const cancelled=await cancellationResults;
+const cancellation={submitted:count,upstreamStarts:cancellationStarts,fulfilled:cancelled.filter(result=>result.status==='fulfilled').length,rejected:cancelled.filter(result=>result.status==='rejected').length};
+const passed=queue.upstreamStarts===count&&queue.peakActive<=maximum&&denial.upstreamStarts===maximum&&denial.rejected===count-maximum&&cancellation.upstreamStarts===maximum&&cancellation.rejected===count-maximum;
+const result={date:new Date().toISOString(),kind:'offline synthetic queue stress; not Google requests',callsPerScenario:count,scenarios:3,elapsedMs:Math.round(performance.now()-began),passed,queue,denial,cancellation,limitations:['Zero interval in stress scenarios measures queue/concurrency, not live rate limits.','Start spacing, cooldown and response-body slot lifetime are independently verified by deterministic unit tests.','Response doubles do not reproduce network, parsing, assets, IP policy, upstream request counts or long-duration service behavior.']};
+await writeFile(output,JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));if(!passed)process.exitCode=1;

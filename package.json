@@ -53,6 +53,7 @@
     "@types/jsdom": "21.1.7",
     "@types/node": "^22.0.0",
     "jsdom": "26.1.0",
+    "marked": "15.0.12",
     "tsup": "^8.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.7.0",

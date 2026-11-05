@@ -1,0 +1,15 @@
+{
+  "capturedAt": "2026-11-05",
+  "kind": "sanitized-live-rendered-dom-projection",
+  "query": "best breakfast restaurants in Austin Texas",
+  "transport": "Ordinary in-app browser existing signed-in session; not HTTP SDK retrieval",
+  "sourceUrl": "https://www.google.com/search?q=best+breakfast+restaurants+in+Austin+Texas&udm=50&hl=en&gl=us",
+  "scope": "Actual data-scope-id=turn subtree in reconstructed m-x-content wrapper. Recursive projection retained text/tags and allowlisted semantic/citation/asset/ARIA attributes. No account header/footer, scripts/styles/SVG included. Images kept as public URLs; inline data images removed. Remapped UUIDs; removed URLtracking except actual searchviewer svid and meaningful video parameters. Not byte-exact wire capture or pixel fidelity proof.",
+  "sourceProjectionSha256": "1646fe5f5917dd677205140e2a6f8bb85e20238ada1e779930c7fa3a41bd8602",
+  "fixtureSha256": "0a2a06f5370484384bb2e2a66fe107538ab8b78612e0c0188a130d11493c99a8",
+  "queries": [
+    "best breakfast restaurants in Austin Texas",
+    "Which of these have vegetarian breakfast options?"
+  ],
+  "note": "Actual two-turn browser snapshot after submitting follow-up; no synthetic turns or inferred HTTP conversation protocol."
+}
