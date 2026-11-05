@@ -22,13 +22,14 @@ export function runtimePaths(cacheDirectory = process.env.AI_SEARCH_OVERVIEW_CAC
 function run(command: string, args: string[], signal?: AbortSignal, quiet = false): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: quiet ? 'ignore' : ['ignore', 2, 2], shell: false, signal });
-    child.on('error', reject);
-    child.on('exit', (code, termination) => code === 0 ? resolve() : reject(new AiSearchError(`${command} failed (${termination ?? code})`, 'configuration')));
+    child.on('error', error => reject(signal?.aborted ? signal.reason : new AiSearchError(`${command} could not start: ${error.message}`, 'configuration', undefined, { cause: error })));
+    child.on('exit', (code, termination) => signal?.aborted ? reject(signal.reason) : code === 0 ? resolve() : reject(new AiSearchError(`${command} failed (${termination ?? code})`, 'configuration')));
   });
 }
 
 /** Installs the pinned HTTP client and builds the optional embedded runtime in a caller-owned cache. */
 export async function setupRuntime(options: SetupOptions = {}): Promise<RuntimePaths> {
+  if (options.signal?.aborted) throw options.signal.reason;
   const paths = runtimePaths(options.cacheDirectory);
   await run('git', ['--version'], options.signal, true);
   await run('cargo', ['--version'], options.signal, true);
