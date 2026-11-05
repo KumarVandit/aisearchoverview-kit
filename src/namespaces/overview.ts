@@ -25,7 +25,7 @@ export function overviewResult(report: GoogleSearchMonitorResponse, query: strin
       warnings: report.metadata.warnings,
     },
   };
-  if (data && report.metadata.aiOverview.status === 'present') return { ...base, status: 'present', text: data.text, ...(data.markdown !== undefined ? { markdown: data.markdown } : {}) };
+  if (data && report.metadata.aiOverview.status === 'present') return { ...base, status: 'present', text: data.text, ...(data.markdown !== undefined ? { markdown: data.markdown } : {}), ...(data.citationPills?.length ? { citationPills: data.citationPills.map(pill => ({ ...pill })) } : {}) };
   return { ...base, status: report.metadata.aiOverview.status === 'blocked' ? 'blocked' : 'unverified' };
 }
 

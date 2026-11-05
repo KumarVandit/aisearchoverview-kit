@@ -75,6 +75,30 @@
       "fixtureSha256": "6ab1036c51c343afa9bde0bce05e35a8e91aacdabe19b763b2e54ea8485d55b0",
       "scope": "Actual simplified Search AI Overview card plus its exact-target literal HTML transfer; no organic results or account headers/footers",
       "sanitization": "Selected the actual Gx5Zad/xpd/pkphOe Overview card with its span heading, frRrnc summary, disclaimer footer and initially empty accdef target. Kept only the actual .ijO2Ed display:none rule from CSS. Removed other scripts/styles/media, event handlers, tracking attributes and request/session identifiers. Consistently remapped the target ID and opaque /url q values to fixture identifiers; retained uoh=3 and distinct source identity, without claiming plaintext publisher destinations. Sanitized the literal HTML payload and reserialized its observed unconditional window.jsl.dh IIFE using equivalent string escaping. No answers, source cards or wrappers were fabricated, and no script was executed for fixture construction."
+    },
+    "aio-python-expanded-projection.html": {
+      "kind": "sanitized-live-rendered-dom-projection",
+      "capturedAt": "2026-11-05",
+      "sourceUrl": "https://www.google.com/search?q=python+list+comprehension+examples&hl=en&gl=us",
+      "query": "python list comprehension examples",
+      "transport": "Ordinary in-app browser, existing signed-in session; test reference only, not SDK retrieval",
+      "expansionState": "expanded",
+      "scope": "Actual main-col and rhs-col content; wrapper and AI Overview heading reconstructed in projection",
+      "sourceProjectionSha256": "d2f5fec03fde3f00802e1c9932657917ee0b6ef90465c29f112940c13a8d0855",
+      "fixtureSha256": "08968dc7bef66438667fdab6bb81cba4d3d72a4e89c04db8d3b676ccc0344dcd",
+      "sanitization": "Read-only recursive DOM projection retained text, tags and allowlisted source/citation/container/ARIA/hidden attributes; discarded scripts/styles/SVG/buttons/input, CSS classes, image src and other attributes. Serialized actual main/rhs columns beneath a reconstructed m-x-content wrapper and heading. Remapped UUIDs consistently; removed URL query/fragment tracking except YouTube v/t. JSDOM serialization may normalize markup, including implicit tbody. No account header, footer, cookies or generated answer text included. This fixture cannot establish pixel, image or media fidelity."
+    },
+    "aio-induction-expanded-projection.html": {
+      "kind": "sanitized-live-rendered-dom-projection",
+      "capturedAt": "2026-11-05",
+      "sourceUrl": "https://www.google.com/search?q=induction+vs+gas+stove+pros+and+cons&hl=en&gl=us",
+      "query": "induction vs gas stove pros and cons",
+      "transport": "Ordinary in-app browser, existing signed-in session; test reference only, not SDK retrieval",
+      "expansionState": "expanded",
+      "scope": "Actual main-col and rhs-col content; wrapper and AI Overview heading reconstructed in projection",
+      "sourceProjectionSha256": "43326ef609c52769a67e4024502621f4187d84efc33a26ffe7f9006772be0cc7",
+      "fixtureSha256": "5f51243f14fbd5ccbc92d9cf226080b1899c97486db0d2b1c3bd1fd297870d19",
+      "sanitization": "Read-only recursive DOM projection retained text, tags and allowlisted source/citation/container/ARIA/hidden attributes; discarded scripts/styles/SVG/buttons/input, CSS classes, image src and other attributes. Serialized actual main/rhs columns beneath a reconstructed m-x-content wrapper and heading. Remapped UUIDs consistently; removed URL query/fragment tracking except YouTube v/t. JSDOM serialization may normalize markup, including implicit tbody. No account header, footer, cookies or generated answer text included. This fixture cannot establish pixel, image or media fidelity."
     }
   }
 }
