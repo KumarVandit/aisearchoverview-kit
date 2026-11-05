@@ -1,0 +1,81 @@
+{
+  "name": "aisearchoverview-kit",
+  "version": "0.1.0",
+  "description": "Typed SDK and CLI for actual Google AI Overview text, Markdown and citations",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./advanced": {
+      "types": "./dist/advanced.d.ts",
+      "import": "./dist/advanced.js",
+      "require": "./dist/advanced.cjs"
+    }
+  },
+  "bin": {
+    "aisearchoverview-kit": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "runtime/*.py",
+    "runtime/requirements.txt",
+    "tools/google-search-bootstrap/Cargo.toml",
+    "tools/google-search-bootstrap/Cargo.lock",
+    "tools/google-search-bootstrap/src",
+    "tools/google-search-bootstrap/build.mjs",
+    "tools/google-search-bootstrap/README.md",
+    "docs",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc -p tsconfig.check.json --noEmit",
+    "test": "vitest run tests/unit",
+    "test:live": "AI_SEARCH_LIVE=1 vitest run tests/live",
+    "prepublishOnly": "npm run build && npm run type-check && npm test",
+    "setup": "node dist/cli.js setup",
+    "start": "node dist/cli.js help"
+  },
+  "dependencies": {
+    "acorn": "8.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.4.5",
+    "vitest": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ai-overview",
+    "ai-search",
+    "google-search",
+    "serp",
+    "sdk",
+    "typescript"
+  ],
+  "author": "Kumar Vandit",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KumarVandit/aisearchoverview-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KumarVandit/aisearchoverview-kit/issues"
+  },
+  "homepage": "https://github.com/KumarVandit/aisearchoverview-kit#readme"
+}

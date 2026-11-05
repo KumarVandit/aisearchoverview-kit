@@ -1,0 +1,32 @@
+{
+  "capturedAt": "2026-10-29",
+  "fixtures": {
+    "javascript-required.html": {
+      "kind": "sanitized-live-response",
+      "query": "what is typescript",
+      "transport": "Node fetch",
+      "httpStatus": 200,
+      "originalSha256": "69164e3fdbdfbc67f651ef40d24ab8dd356faf326c47af7febc46c8682b48523",
+      "sanitization": "Removed scripts, styles, frames, form values, event handlers, nonce and challenge attributes, origin-trial data and tracking query values; redacted IP address."
+    },
+    "blocked.html": {
+      "kind": "sanitized-live-response",
+      "query": "what is typescript",
+      "transport": "unmodified headless Chromium 156 with JavaScript",
+      "httpStatus": 200,
+      "originalSha256": "84ac179996203e60c4c23a05b8e9680f658b897f12bd9afb4086ba7ba2503c5a",
+      "sanitization": "Removed scripts, styles, frames, form values, event handlers, nonce and challenge attributes, origin-trial data and tracking query values; redacted IP address."
+    },
+    "autocomplete.json": {
+      "kind": "live-response",
+      "sourceUrl": "https://suggestqueries.google.com/complete/search?client=firefox&q=typescript&hl=en",
+      "httpStatus": 200,
+      "originalSha256": "6b0b32bb8371ae31741f2c3ff6f8edf64a39f1c6734c239c2688c5e253ea5b0d",
+      "sanitization": "None; no credentials or session values."
+    },
+    "structural-search.html": {
+      "kind": "synthetic",
+      "purpose": "Exercises only the supported semantic HTML contract. It is not evidence of current Google Search or AI Overview markup."
+    }
+  }
+}

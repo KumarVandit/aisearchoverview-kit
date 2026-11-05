@@ -1,0 +1,20 @@
+[package]
+name = "google-search-bootstrap"
+version = "0.0.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[workspace]
+# Nested path dependencies must retain the engine's own workspace metadata.
+exclude = ["engine"]
+
+[dependencies]
+mg-sparkle = { path = "engine/crates/mg-sparkle" }
+mg-butane = { path = "engine/crates/mg-butane" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+url = "2"
+
+[patch.crates-io]
+boa_engine = { path = "engine/vendor/boa_engine-0.22.0" }

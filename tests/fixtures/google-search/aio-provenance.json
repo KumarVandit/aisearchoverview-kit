@@ -1,0 +1,80 @@
+{
+  "fixtures": {
+    "aio-sky-collapsed.html": {
+      "kind": "sanitized-live-rendered-dom",
+      "capturedAt": "2026-11-04",
+      "sourceUrl": "https://www.google.com/search?q=why+is+the+sky+blue&hl=en",
+      "query": "why is the sky blue",
+      "transport": "ordinary in-app browser, existing signed-in session",
+      "scope": "m-x-content only; no account header or footer",
+      "expansionState": "collapsed",
+      "sourceSnapshotSha256": "e8f7f3b28357dd9b315bc859e8ea57450a94b6dc66c56c4d996fb96146339fc3",
+      "fixtureSha256": "3a8890861b123f8e670d09836488adb9eeb3aac658351613226316e99c656a54",
+      "sanitization": "Starting from the complete browser-scoped DOM, removed scripts/styles/media/SVG/comments and event/tracking attributes; remapped request-derived IDs and citation UUIDs to deterministic local identifiers; removed URL tracking/session parameters while retaining meaningful video v/t parameters. Kept hidden/error states, ARIA labels, main/rhs container and source-card structure. No outer Search wrappers or semantic regions were fabricated."
+    },
+    "aio-sky-expanded.html": {
+      "kind": "sanitized-live-rendered-dom",
+      "capturedAt": "2026-11-04",
+      "sourceUrl": "https://www.google.com/search?q=why+is+the+sky+blue&hl=en",
+      "query": "why is the sky blue",
+      "transport": "ordinary in-app browser, existing signed-in session",
+      "scope": "m-x-content only; no account header or footer",
+      "expansionState": "expanded",
+      "sourceSnapshotSha256": "ae99198c2cda4d22fd042346eeedb69815b2a928f9022c40eecde2637241356e",
+      "fixtureSha256": "5fb28635f0b275ff448cb1469eb11301cf37bc10c903abef8fdf5eb2263c41c6",
+      "sanitization": "Starting from the complete browser-scoped DOM, removed scripts/styles/media/SVG/comments and event/tracking attributes; remapped request-derived IDs and citation UUIDs to deterministic local identifiers; removed URL tracking/session parameters while retaining meaningful video v/t parameters. Kept hidden/error states, ARIA labels, main/rhs container and source-card structure. No outer Search wrappers or semantic regions were fabricated."
+    },
+    "aio-leaves-collapsed.html": {
+      "kind": "sanitized-live-rendered-dom",
+      "capturedAt": "2026-11-04",
+      "sourceUrl": "https://www.google.com/search?q=why+do+leaves+change+color+in+autumn&hl=en",
+      "query": "why do leaves change color in autumn",
+      "transport": "ordinary in-app browser, existing signed-in session",
+      "scope": "m-x-content only; no account header or footer",
+      "expansionState": "collapsed",
+      "sourceSnapshotSha256": "08c3a85c77e3f696eb36e510d5d9dc8b0d56fa5dbc8c712d1e022e15a3aa9e68",
+      "fixtureSha256": "b3218f449b3c71f86343d16ab9d963b3ca700731389aad8a52aeb4396b8ddc02",
+      "sanitization": "Starting from the complete browser-scoped DOM, removed scripts/styles/media/SVG/comments and event/tracking attributes; remapped request-derived IDs and citation UUIDs to deterministic local identifiers; removed URL tracking/session parameters while retaining meaningful video v/t parameters. Kept hidden/error states, ARIA labels, main/rhs container and source-card structure. No outer Search wrappers or semantic regions were fabricated."
+    },
+    "aio-sky-http.html": {
+      "kind": "sanitized-live-http-response-subtree",
+      "capturedAt": "2026-11-04T06:33:54.966Z",
+      "sourceUrl": "https://www.google.com/search?q=why+is+the+sky+blue&hl=en&gl=us",
+      "query": "why is the sky blue",
+      "transport": "Initial document HTTP response captured from ordinary native Chrome with signed-out UI verified; sanitized Network HAR export omits cookie and authentication headers and does not establish cookie-free retrieval",
+      "httpStatus": 200,
+      "contentType": "text/html",
+      "scope": "Actual EYwa3d/data-aquarium Overview subtree from the original HTTP response; no account header or footer",
+      "sourceResponseSha256": "6f1961e73d4aae183441dc5bb0735ce04733c0c4fbd47b35b55743ae49b50a1b",
+      "sourceResponseBytes": 1075503,
+      "fixtureSha256": "cae30d3c4f38e19d82ad93c8b56f54fa0f3922aa926c929bc8a800cecb962625",
+      "sanitization": "Parsed original response and selected its actual EYwa3d/data-aquarium subtree. Removed scripts, styles, media, comments, forms/input, event handlers, class and tracking/session/request-derived attributes and all element IDs. Kept actual heading, main/rhs columns, visibility/busy state, protocol controllers and citation structure. Remapped source/citation identifiers deterministically. Removed URL fragments and query parameters except meaningful YouTube v/t; consistently remapped opaque Google /goto url values to redacted-destination-N while preserving distinct-link identity (these sanitized redirect values are not live destinations). No wrappers, answers or pre-render structure were fabricated; no browser DOM mutation was used."
+    },
+    "aio-sky-simplified-http.html": {
+      "kind": "sanitized-live-http-response-subtree-and-literal-transfer",
+      "capturedAt": "2026-11-04T08:49:10.000Z",
+      "sourceUrl": "https://www.google.com/search?q=why+is+the+sky+blue&hl=en&gl=us",
+      "query": "why is the sky blue",
+      "transport": "Cold HTTP requests with an embedded JavaScript bootstrap runtime; no browser executable, imported browser cookies or proxy. Fixture is the final successful HTTP response, not plain-fetch-only availability.",
+      "httpStatus": 200,
+      "sourceResponseSha256": "da1eb6d008c467bb9013465e9136802ba0019e558ff7603454c8ecc802bf3cd4",
+      "sourceResponseBytes": 73777,
+      "fixtureSha256": "2b90b6d7a387891a59696b624969b43041c38b0bf47411072f7dd4406addb30e",
+      "scope": "Actual simplified Search AI Overview card plus its exact-target literal HTML transfer; no organic results or account headers/footers",
+      "sanitization": "Selected the actual Gx5Zad/xpd/pkphOe Overview card with its span heading, frRrnc summary, disclaimer footer and initially empty accdef target. Kept only the actual .ijO2Ed display:none rule from CSS. Removed other scripts/styles/media, event handlers, tracking attributes and request/session identifiers. Consistently remapped the target ID and opaque /url q values to fixture identifiers; retained uoh=3 and distinct source identity, without claiming plaintext publisher destinations. Sanitized the literal HTML payload and reserialized its observed unconditional window.jsl.dh IIFE using equivalent string escaping. No answers, source cards or wrappers were fabricated, and no script was executed for fixture construction."
+    },
+    "aio-leaves-simplified-http.html": {
+      "kind": "sanitized-live-http-response-subtree-and-literal-transfer",
+      "capturedAt": "2026-11-04T08:51:28.000Z",
+      "sourceUrl": "https://www.google.com/search?q=why+do+leaves+change+color+in+autumn&hl=en&gl=us",
+      "query": "why do leaves change color in autumn",
+      "transport": "Cold HTTP requests with an embedded JavaScript bootstrap runtime; no browser executable, imported browser cookies or proxy. Fixture is the final successful HTTP response, not plain-fetch-only availability.",
+      "httpStatus": 200,
+      "sourceResponseSha256": "606f5a6d1190e51c5a76f4dd3ef9d8ad513d1482859ea476d18eebf5bd737662",
+      "sourceResponseBytes": 132851,
+      "fixtureSha256": "6ab1036c51c343afa9bde0bce05e35a8e91aacdabe19b763b2e54ea8485d55b0",
+      "scope": "Actual simplified Search AI Overview card plus its exact-target literal HTML transfer; no organic results or account headers/footers",
+      "sanitization": "Selected the actual Gx5Zad/xpd/pkphOe Overview card with its span heading, frRrnc summary, disclaimer footer and initially empty accdef target. Kept only the actual .ijO2Ed display:none rule from CSS. Removed other scripts/styles/media, event handlers, tracking attributes and request/session identifiers. Consistently remapped the target ID and opaque /url q values to fixture identifiers; retained uoh=3 and distinct source identity, without claiming plaintext publisher destinations. Sanitized the literal HTML payload and reserialized its observed unconditional window.jsl.dh IIFE using equivalent string escaping. No answers, source cards or wrappers were fabricated, and no script was executed for fixture construction."
+    }
+  }
+}
