@@ -1,0 +1,162 @@
+{
+  "samples": [
+    {
+      "name": "sky",
+      "query": "why is the sky blue",
+      "retrievalMs": 1161,
+      "capturedOn": "2026-11-04",
+      "report": {
+        "success": true,
+        "result": {
+          "organicResults": [],
+          "peopleAlsoAsk": [],
+          "relatedSearches": [],
+          "aioverview": {
+            "text": "The sky is blue because Earth's atmosphere scatters sunlight in all directions, and blue light is scattered more than other colors. How It Works White Light: Sunlight appears white, but it is made of all the colors of the rainbow. Wavelengths: Each color travels in waves of different lengths. Red and yellow have long waves, while blue and violet have short, choppy waves. Rayleigh Scattering: When sunlight reaches Earth, it hits gases like nitrogen and oxygen in the air. Because blue light has a shorter wavelength, the gas molecules scatter it in every direction much more than longer-wavelength colors. Human Eyes: Although violet light has an even shorter wavelength than blue, the sky looks blue instead of violet because the sun emits more blue light, and human eyes are much more sensitive to blue light than to violet. You can learn more about atmospheric science through the NASA Space Place or check out educational guides from NESDIS. Would you like to know why sunsets turn red and orange, or why the sky is black in space?",
+            "sources": [
+              {
+                "position": 1,
+                "url": "https://spaceplace.nasa.gov/blue-sky/",
+                "label": "Why Is the Sky Blue? | NASA Space..."
+              },
+              {
+                "position": 2,
+                "url": "https://www.nesdis.noaa.gov/about/k-12-education/atmosphere/why-the-sky-blue",
+                "label": "Why Is the Sky Blue? | NESDIS |..."
+              },
+              {
+                "position": 3,
+                "url": "https://www.weather.gov/fgz/SkyBlue",
+                "label": "Why Is The <b>Sky Blue</b>? -..."
+              },
+              {
+                "position": 4,
+                "url": "https://www.rmg.co.uk/stories/space-astronomy/why-sky-blue",
+                "label": "Why is the sky blue? | Royal..."
+              },
+              {
+                "position": 5,
+                "url": "https://www.montrealsciencecentre.com/blog/why-the-sky-blue",
+                "label": "Why is the Sky Blue? | Montreal..."
+              },
+              {
+                "position": 6,
+                "url": "https://plus.nasa.gov/video/space-place-in-a-snap-why-is-the-sky-blue-2/",
+                "label": "Space Place in a Snap: Why Is the Sky..."
+              },
+              {
+                "position": 7,
+                "url": "https://www.youtube.com/shorts/x3pdttsvcqI",
+                "label": "Why is the sky blue?"
+              }
+            ]
+          }
+        },
+        "metadata": {
+          "transport": "snapshot",
+          "query": "why is the sky blue",
+          "aiOverview": {
+            "requested": true,
+            "status": "present",
+            "reason": "Answer text and cited links were extracted from simplified Search HTML and literal inline HTML transfers without executing scripts; generation and expansion completeness are not established by the snapshot.",
+            "completeness": "unverified"
+          },
+          "warnings": [
+            "This is a supported subset of the Cloro-style contract, not Cloro backend or retrieval parity.",
+            "Unextracted fields are omitted; answer completeness is not verified; publisher URLs in this saved artifact were resolved afterward through Google redirects.",
+            "Organic and related-question extraction has structural unit coverage but no successful live Search capture from the research environment.",
+            "Saved response parsed offline; publisher URLs resolved afterward with direct Google redirect GETs where possible. Unresolved opaque URLs are redacted."
+          ],
+          "sourceUrl": "https://www.google.com/search?q=why%20is%20the%20sky%20blue&hl=en&gl=us",
+          "httpStatus": 200,
+          "searchStatus": "results"
+        }
+      },
+      "captureMethod": "HTTP plus embedded mg-sparkle/Boa library; no browser application launched"
+    },
+    {
+      "name": "leaves",
+      "query": "why do leaves change color in autumn",
+      "retrievalMs": 1996,
+      "capturedOn": "2026-11-04",
+      "report": {
+        "success": true,
+        "result": {
+          "organicResults": [],
+          "peopleAlsoAsk": [],
+          "relatedSearches": [],
+          "aioverview": {
+            "text": "Leaves change color in the fall because shorter days and cooler temperatures cause trees to stop producing green chlorophyll. Why Green Fades Away Chlorophyll breakdown: During spring and summer, leaves are green because they are packed with chlorophyll, which helps trees make food from sunlight. Winter prep: As autumn arrives and daylight hours shrink, trees get a signal to prepare for winter. They stop making new chlorophyll and break down the remaining pigment, causing the green color to fade. Where the Colors Come From Yellows and oranges: Pigments called carotenoids (which also color carrots) are already inside the leaves all spring and summer. They are hidden by the heavy green chlorophyll until it fades. You can learn more about how seasonal changes affect tree cycles via the NESDIS K-12 Education Guide. Reds and purples: These colors come from anthocyanins, which are newly produced in the fall. They form when leftover sugars get trapped inside the leaves after the tree starts sealing off its branches. Browns: As the leaf completely dies and dries out, leftover waste products turn the leaf brown. Why Trees Drop Their Leaves Saving energy: Maintaining leaves during freezing winter weather takes too much energy, and cold temperatures would damage them. Preventing damage: Heavy snow and ice would catch on broad leaves and snap the tree's branches. The tree seals off the connection to each leaf with a special layer of cells, causing the leaf to drop to the ground. Would you like to know which specific tree species create bright red versus yellow leaves, or how weather conditions affect the brightness of the colors each year?",
+            "sources": [
+              {
+                "position": 1,
+                "url": "https://www.si.edu/stories/why-do-leaves-change-color-fall",
+                "label": "Why Do Leaves Change Color in the..."
+              },
+              {
+                "position": 2,
+                "url": "https://www.nesdis.noaa.gov/about/k-12-education/understanding-our-planet/why-do-leaves-change-color",
+                "label": "Why Do Leaves Change Color? | NESDIS"
+              },
+              {
+                "position": 3,
+                "url": "https://www.unc.edu/discover/the-science-behind-fall-foliage/",
+                "label": "The science behind fall foliage |..."
+              },
+              {
+                "position": 4,
+                "url": "https://pacificsciencecenter.org/blog/why-do-leaves-change-colors/",
+                "label": "Why Do Leaves Change Colors and Fall..."
+              },
+              {
+                "position": 5,
+                "url": "https://www.cmnh.org/learn/science-blog/2026/10/13/why-do-leaves-change-color-in-the-fall",
+                "label": "Why Do Leaves Change Color in the..."
+              },
+              {
+                "position": 6,
+                "url": "https://www.youtube.com/watch?v=2jZ-qAz7X5E",
+                "label": "Why do Leaves Change Colors and Fall..."
+              },
+              {
+                "position": 7,
+                "url": "https://www.instagram.com/reel/DeFy6crukSq/",
+                "label": "Why do leaves change color in the..."
+              },
+              {
+                "position": 8,
+                "url": "https://www.youtube.com/shorts/CS9hv2E4nGw",
+                "label": "Why do leaves change colors in the..."
+              }
+            ]
+          }
+        },
+        "metadata": {
+          "transport": "snapshot",
+          "query": "why do leaves change color in autumn",
+          "aiOverview": {
+            "requested": true,
+            "status": "present",
+            "reason": "Answer text and cited links were extracted from simplified Search HTML and literal inline HTML transfers without executing scripts; generation and expansion completeness are not established by the snapshot.",
+            "completeness": "unverified"
+          },
+          "warnings": [
+            "This is a supported subset of the Cloro-style contract, not Cloro backend or retrieval parity.",
+            "Unextracted fields are omitted; answer completeness is not verified; publisher URLs in this saved artifact were resolved afterward through Google redirects.",
+            "Organic and related-question extraction has structural unit coverage but no successful live Search capture from the research environment.",
+            "Saved response parsed offline; publisher URLs resolved afterward with direct Google redirect GETs where possible. Unresolved opaque URLs are redacted."
+          ],
+          "sourceUrl": "https://www.google.com/search?q=why%20do%20leaves%20change%20color%20in%20autumn&hl=en&gl=us",
+          "httpStatus": 200,
+          "searchStatus": "results"
+        }
+      },
+      "captureMethod": "HTTP plus embedded mg-sparkle/Boa library; no browser application launched"
+    }
+  ],
+  "sourceResolution": {
+    "attempted": 15,
+    "resolved": 15,
+    "publisherPagesFetched": false
+  }
+}
