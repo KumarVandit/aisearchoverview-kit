@@ -71,7 +71,9 @@ function overviewResult(overview: GoogleAiOverview, markdown: boolean): GoogleSe
   return {
     text: overview.text ?? '',
     ...(markdown && overview.markdown !== undefined ? { markdown: overview.markdown } : {}),
-    sources: overview.sources.map((source, index) => ({ position: index + 1, url: source.url, label: source.title, ...(redirectLink(source.url) ? { redirectLink: source.url } : {}) })),
+    sources: overview.sources.map((source, index) => ({ position: index + 1, url: source.url, label: source.title, ...(source.description ? {description:source.description} : {}), ...(redirectLink(source.url) ? { redirectLink: source.url } : {}) })),
+    ...(overview.productLinks?.length ? {productLinks:overview.productLinks.map(link => ({...link}))} : {}),
+    ...(overview.videos?.length ? {videos:overview.videos.map(video => ({...video}))} : {}),
     ...(overview.citationPills?.length ? { citationPills: overview.citationPills.map(pill => ({ ...pill })) } : {}),
   };
 }

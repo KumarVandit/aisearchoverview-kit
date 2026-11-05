@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-05T14:56:23.754Z",
+  "kind": "offline synthetic queue stress; not Google requests",
+  "callsPerScenario": 10000,
+  "scenarios": 3,
+  "elapsedMs": 76,
+  "passed": true,
+  "queue": {
+    "submitted": 10000,
+    "upstreamStarts": 10000,
+    "fulfilled": 10000,
+    "peakActive": 4,
+    "configuredMaxConcurrent": 4,
+    "intervalMs": 0
+  },
+  "denial": {
+    "submitted": 10000,
+    "upstreamStarts": 4,
+    "fulfilled": 4,
+    "rejected": 9996
+  },
+  "cancellation": {
+    "submitted": 10000,
+    "upstreamStarts": 4,
+    "fulfilled": 4,
+    "rejected": 9996
+  },
+  "limitations": [
+    "Zero interval in stress scenarios measures queue/concurrency, not live rate limits.",
+    "Start spacing, cooldown and response-body slot lifetime are independently verified by deterministic unit tests.",
+    "Response doubles do not reproduce network, parsing, assets, IP policy, upstream request counts or long-duration service behavior."
+  ]
+}

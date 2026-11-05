@@ -99,6 +99,18 @@
       "sourceProjectionSha256": "43326ef609c52769a67e4024502621f4187d84efc33a26ffe7f9006772be0cc7",
       "fixtureSha256": "5f51243f14fbd5ccbc92d9cf226080b1899c97486db0d2b1c3bd1fd297870d19",
       "sanitization": "Read-only recursive DOM projection retained text, tags and allowlisted source/citation/container/ARIA/hidden attributes; discarded scripts/styles/SVG/buttons/input, CSS classes, image src and other attributes. Serialized actual main/rhs columns beneath a reconstructed m-x-content wrapper and heading. Remapped UUIDs consistently; removed URL query/fragment tracking except YouTube v/t. JSDOM serialization may normalize markup, including implicit tbody. No account header, footer, cookies or generated answer text included. This fixture cannot establish pixel, image or media fidelity."
+    },
+    "aio-shoes-expanded-projection.html": {
+      "kind": "sanitized-live-rendered-dom-projection",
+      "capturedAt": "2026-11-05",
+      "sourceUrl": "https://www.google.com/search?q=running+shoes+for+flat+feet&hl=en&gl=us",
+      "query": "running shoes for flat feet",
+      "transport": "Ordinary in-app browser; test reference only, not HTTP SDK retrieval",
+      "expansionState": "expanded",
+      "scope": "Actual main-col/rhs-col content; wrapper and AI Overview heading reconstructed from separately observed heading",
+      "sourceProjectionSha256": "b4e08a0ad4fbfc9a34e84a025123506e7720ce8381cb7c948ed3593340f22617",
+      "fixtureSha256": "b0c2a13d0c12b70f9f3282cbcabd532ac0b9cd629d02eb2fd0ea745d7d0cbc4a",
+      "sanitization": "Parent provided a recursive read-only DOM projection retaining main/rhs text and allowlisted tags/attributes. Wrapper was reconstructed and actual AX-confirmed AI Overview heading added to the fixture. Removed every image src (source-rail thumbnail URLs/data, favicon data URLs and favicon service URLs), UUIDs remapped consistently; removed tracking query parameters and product rds tracking segment; retained native public product IDs and meaningful prds fields, YouTube v/t, ARIA controls and product helper labels. No account headers/cookies/scripts/styles included. This reduced projection cannot establish pixel, image or media fidelity."
     }
   }
 }

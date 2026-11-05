@@ -120,6 +120,12 @@ class FetchTests(unittest.TestCase):
         self.assertTrue(session.closed)
         self.assertEqual(len(session.calls), 2)
 
+    def test_ai_mode_redirect_cannot_downgrade_to_ordinary_search(self):
+        mode = URL + '&udm=50'
+        with self.assertRaises(ValueError):
+            driver.checked_url(URL, mode)
+        self.assertEqual(driver.checked_url(mode + '&sei=own-transition', mode), mode + '&sei=own-transition')
+
     def test_foreign_origins_and_cookie_injection_are_rejected(self):
         for value in ['http://www.google.com/search', 'https://user:password@www.google.com/search', 'https://www.google.com:444/search', 'https://www.google.com/search#fragment']:
             with self.assertRaises(ValueError):

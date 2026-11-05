@@ -22,7 +22,7 @@ describe('real rendered Overview projections, captured 2026-11-05', () => {
     dom.window.close();
   });
 
-  it('preserves comparison headings, lists and citation source positions without claiming video objects', () => {
+  it('preserves comparison headings, lists and citation source positions and actual inline video cards', () => {
     const html = loadNestedFixture('google-search', 'aio-induction-expanded-projection.html');
     const result = sdk().overview.parse(html, { sourceUrl: 'https://www.google.com/search?q=induction+vs+gas+stove+pros+and+cons' });
     expect(result.status).toBe('present');
@@ -33,6 +33,7 @@ describe('real rendered Overview projections, captured 2026-11-05', () => {
     expect(result.sources).toHaveLength(14);
     expect(result.citationPills).toHaveLength(9);
     for (const pill of result.citationPills ?? []) expect(result.sources[pill.position - 1]?.url).toBe(pill.url);
-    expect(result).not.toHaveProperty('videos');
+    expect(result.videos).toHaveLength(3);
+    expect(result.videos?.[0]).toMatchObject({ platform: 'youtube', title: expect.any(String), duration: expect.any(String) });
   });
 });

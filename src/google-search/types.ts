@@ -59,6 +59,7 @@ export interface GoogleSuggestOptions {
 }
 
 export interface GoogleSearchLink {
+  description?: string;
   title: string;
   url: string;
 }
@@ -69,17 +70,41 @@ export interface GoogleOrganicResult extends GoogleSearchLink {
   displayUrl?: string;
 }
 
+export interface GoogleAiOverviewVideo {
+  url: string;
+  title?: string;
+  thumbnail?: string;
+  source?: string;
+  platform?: string;
+  date?: string;
+  duration?: string;
+  channel?: string;
+  startTimeSeconds?: number;
+  segmentDurationSeconds?: number;
+}
+
+export interface GoogleAiOverviewProductLink {
+  position: number;
+  title: string;
+  /** Google product-viewer URL, not a merchant URL or a Cloro product-result token. */
+  url: string;
+  productDocid: string;
+}
+
 export interface GoogleAiOverview {
   status: 'present' | 'blocked' | 'unverified';
   /** Extracted visible text from an explicitly labeled overview region, when available. */
   text?: string;
   markdown?: string;
   citationPills?: GoogleAiOverviewCitationPill[];
+  videos?: GoogleAiOverviewVideo[];
+  productLinks?: GoogleAiOverviewProductLink[];
   sources: GoogleSearchLink[];
   reason: string;
 }
 
 export interface GoogleAiOverviewCitationPill {
+  description?: string;
   citationPillId: number;
   position: number;
   label: string;
@@ -106,6 +131,7 @@ export interface GoogleSearchMonitorOptions {
 }
 
 export interface GoogleSearchMonitorSource {
+  description?: string;
   position: number;
   url: string;
   label: string;
@@ -117,6 +143,8 @@ export interface GoogleSearchMonitorOverview {
   markdown?: string;
   sources: GoogleSearchMonitorSource[];
   citationPills?: GoogleAiOverviewCitationPill[];
+  videos?: GoogleAiOverviewVideo[];
+  productLinks?: GoogleAiOverviewProductLink[];
 }
 
 export interface GoogleSearchMonitorResult {

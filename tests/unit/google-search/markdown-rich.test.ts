@@ -63,9 +63,9 @@ describe('synthetic rich-content Markdown contracts', () => {
     const result = markdown(html);
     expect(result).toMatch(/^3\. Third$/m);
     expect(result).toMatch(/^9\. Ninth$/m);
-    expect(result).toMatch(/^  - A nested detail$/m);
-    expect(result).toMatch(/^  4\. Nested fourth$/m);
-    expect(result).toMatch(/^  5\. Nested fifth$/m);
+    expect(result).toMatch(/^   - A nested detail$/m);
+    expect(result).toMatch(/^   4\. Nested fourth$/m);
+    expect(result).toMatch(/^   5\. Nested fifth$/m);
     expect(result).toMatch(/^10\. Tenth$/m);
   });
 

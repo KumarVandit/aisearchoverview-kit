@@ -80,11 +80,31 @@ function tableMarkdown(table: HtmlNode, sourceUrl: string): string {
   return caption ? overviewMarkdown(caption, sourceUrl) + '\n\n' + rendered : rendered;
 }
 
-interface ListContext { ordered: boolean; next: number; step: number }
-interface Frame { node: HtmlNode | string; close?: string; depth: number; list?: ListContext }
+function listMarkdown(list: HtmlNode, sourceUrl: string): string {
+  const items: HtmlNode[] = [], pending = [...list.children].reverse();
+  while (pending.length) {
+    const node = pending.pop()!;
+    if (typeof node === 'string' || hidden(node)) continue;
+    if (node.tag === 'li') { items.push(node); continue; }
+    if (node.tag === 'ul' || node.tag === 'ol') continue;
+    pending.push(...[...node.children].reverse());
+  }
+  const ordered = list.tag === 'ol', reversed = ordered && list.attrs.reversed !== undefined;
+  let next = integer(list.attrs.start) ?? (reversed ? items.length : 1);
+  return items.map(item => {
+    const value = integer(item.attrs.value) ?? next;
+    const marker = ordered ? value + '. ' : '- ';
+    if (ordered) next = value + (reversed ? -1 : 1);
+    const body = overviewMarkdown({tag:'div',attrs:{},children:item.children}, sourceUrl);
+    const continuation = ' '.repeat(marker.length);
+    return marker + body.split('\n').map((line,index) => index && line ? continuation + line : line).join('\n');
+  }).join('\n\n');
+}
+
+interface Frame { node: HtmlNode | string; close?: string; inline?: boolean }
 
 export function overviewMarkdown(root: HtmlNode, sourceUrl: string): string {
-  const output: Array<string | { literal: string }> = [], stack: Frame[] = [{ node: root, depth: 0 }];
+  const output: Array<string | { literal: string }> = [], stack: Frame[] = [{ node: root }];
   while (stack.length) {
     const frame = stack.pop()!;
     if (frame.close !== undefined) { output.push(frame.close); continue; }
@@ -93,34 +113,30 @@ export function overviewMarkdown(root: HtmlNode, sourceUrl: string): string {
     if (hidden(node)) continue;
     if (node.tag === 'pre') { output.push('\n\n', { literal: codeBlock(node) }, '\n\n'); continue; }
     if (node.tag === 'code') { output.push({ literal: codeSpan(contentText(node)) }); continue; }
+    if (node.tag === 'blockquote') { const quote = overviewMarkdown({tag:'div',attrs:{},children:node.children}, sourceUrl); output.push('\n\n', {literal:quote.split('\n').map(line => '> ' + line).join('\n')}, '\n\n'); continue; }
+    if (node.tag === 'ul' || node.tag === 'ol') { output.push('\n\n', {literal:listMarkdown(node, sourceUrl)}, '\n\n'); continue; }
     if (node.tag === 'table') { output.push('\n\n', { literal: tableMarkdown(node, sourceUrl) }, '\n\n'); continue; }
     if (node.tag === 'img') {
       const url = safeUrl(node.attrs.src, sourceUrl), alt = escapeText(node.attrs.alt ?? '');
       output.push(url ? '![' + alt + '](' + url + ')' : alt);
       continue;
     }
-    let before = '', after = '', depth = frame.depth, list = frame.list;
+    let before = '', after = '';
+    const inline = frame.inline || /^(?:a|strong|b|em|i)$/.test(node.tag);
     const heading = /^h([1-6])$/.exec(node.tag)?.[1] ?? (node.attrs.role === 'heading' ? node.attrs['aria-level'] : undefined);
     if (heading && /^[1-6]$/.test(heading)) { before = '\n\n' + '#'.repeat(Number(heading)) + ' '; after = '\n\n'; }
     else if (node.tag === 'br') before = '\n';
     else if (node.tag === 'strong' || node.tag === 'b') before = after = '**';
     else if (node.tag === 'em' || node.tag === 'i') before = after = '*';
-    else if (node.tag === 'ul' || node.tag === 'ol') {
-      before = after = '\n'; depth++;
-      const reversed = node.tag === 'ol' && node.attrs.reversed !== undefined;
-      list = { ordered: node.tag === 'ol', next: integer(node.attrs.start) ?? (reversed ? node.children.filter(child => typeof child === 'object' && child.tag === 'li' && !hidden(child)).length : 1), step: reversed ? -1 : 1 };
-    } else if (node.tag === 'li') {
-      let marker = '- ';
-      if (list?.ordered) { const value = integer(node.attrs.value) ?? list.next; marker = value + '. '; list.next = value + list.step; }
-      before = '\n' + '  '.repeat(Math.min(20, Math.max(0, depth - 1))) + marker; after = '\n';
-    } else if (node.tag === 'p' || node.tag === 'div' || node.tag === 'section' || node.tag === 'figure' || node.tag === 'figcaption') before = after = '\n\n';
+    else if (node.tag === 'li') { before = '\n- '; after = '\n';
+    } else if (node.tag === 'p' || node.tag === 'div' || node.tag === 'section' || node.tag === 'figure' || node.tag === 'figcaption') before = after = frame.inline ? '' : '\n\n';
     else if (node.tag === 'a') {
       const url = safeUrl(node.attrs.href, sourceUrl);
       if (url) { before = '['; after = '](' + url + ')'; }
     }
     output.push(before);
-    stack.push({ node: '', close: after, depth, list });
-    for (let index = node.children.length - 1; index >= 0; index--) stack.push({ node: node.children[index]!, depth, list });
+    stack.push({ node: '', close: after, inline });
+    for (let index = node.children.length - 1; index >= 0; index--) stack.push({ node: node.children[index]!, inline });
   }
   const clean = (value: string) => value.replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+(?=[^ \t-\d])/g, '\n').replace(/\n{3,}/g, '\n\n');
   let result = '', regular = '';

@@ -78,7 +78,7 @@ Commands print JSON. `get`/`parse` exit 0 for a present answer, 2 for a blocked 
 | `aisearchoverview-kit` | `sdk()`, Overview/source namespaces, public result types and typed errors. |
 | `aisearchoverview-kit/advanced` | Low-level Search client, parsers, optional caller-owned browser adapter and monitoring-envelope converters. |
 
-The main API is focused on Google AI Overviews. AI Mode, ChatGPT, Gemini and other providers are not implemented by this package. Cloro's public interfaces informed the request/response review; this package has its own implementation and purpose-based SDK, with no Cloro API calls or platform dependency. [Comparison](docs/cloro-comparison.md).
+The main API is focused on Google AI Overviews. AI Mode has experimental HTTP retrieval and tested snapshot parsing, including captured follow-up turns; reliable live conversations remain unresolved. ChatGPT, Gemini and other providers are outside this package. Cloro's public interfaces informed the request/response review; this package has its own implementation and purpose-based SDK, with no Cloro API calls or platform dependency. [Comparison](docs/cloro-comparison.md).
 
 ## Verification and limits
 
@@ -98,3 +98,6 @@ Default tests are offline. `npm run test:live` opts into network probes; an acce
 [Layout coverage audit](docs/layout-coverage.md) · [API and types](docs/api.md) · [Architecture](docs/architecture.md) · [Advanced controls](docs/advanced.md) · [Research evidence](docs/google-search-research.md)
 
 MIT for this SDK and adapter. The fetched engine, HTTP client and Rust dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md). No Google affiliation is implied.
+
+
+Current development coverage: [Google features and limits](docs/current-coverage.md), [live scaling measurements](docs/scale-audit.md), and [AI Mode protocol evidence](docs/ai-mode-protocol.md). These additions are unreleased.

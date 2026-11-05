@@ -1,5 +1,7 @@
 # Layout coverage audit — 5 November 2026
 
+This records the initial audit before the later feature additions. See [current development coverage](current-coverage.md) for updated support.
+
 The SDK was tested against 24 fresh US/English queries across science, household tasks, health, finance, legal procedures, gardening, shopping, recipes, travel, local businesses, programming and numerical comparisons. **15 returned recognized Overviews; 9 returned readable Search results without an observed Overview marker.** None failed at the transport level. This is a single-session sample, not an availability guarantee.
 
 All 15 HTTP positives used the same simplified Search layout. Topic breadth therefore does not establish support for every Google UI. Two additional expanded, ordinary-browser references exercised actual rich comparison and programming layouts. The browser was a test reference only; no browser fallback was added to SDK retrieval.
