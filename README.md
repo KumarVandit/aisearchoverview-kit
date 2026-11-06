@@ -78,12 +78,11 @@ Commands print JSON. `get`/`parse` exit 0 for a present answer, 2 for a blocked 
 | `aisearchoverview-kit` | `sdk()`, Overview/source namespaces, public result types and typed errors. |
 | `aisearchoverview-kit/advanced` | Low-level Search client, parsers, optional caller-owned browser adapter and monitoring-envelope converters. |
 
-
+The main API focuses on Google AI Overviews. AI Mode supports saved conversation parsing, including follow-up turns. Live AI Mode retrieval is experimental; reliable live conversations are not currently supported.
 
 ## Verification and limits
 
-
-
+Overview retrieval uses the local embedded HTTP runtime. Results, citations, eligibility and response times vary by query and session. Answer presence and access states are reported explicitly.
 Expanded literal HTML transfers are decoded statically; response scripts are not executed by the answer parser. The separate native helper executes only the recognized session bootstrap and has no HTTP broker. Answer completeness remains unverified. Unresolved Google redirect URLs remain explicit until `sources.resolve()` is requested.
 
 ```sh
@@ -95,8 +94,9 @@ npm test
 
 Default tests are offline. `npm run test:live` opts into network probes; an access-state observation is not a successful Overview benchmark. Python driver tests use `python runtime/test_fetch.py` in an environment with the pinned HTTP client installed. Native input tests are available through Cargo after setup/source preparation.
 
-
+[API and types](docs/api.md) · [Architecture](docs/architecture.md) · [Advanced controls](docs/advanced.md)
 
 MIT for this SDK and adapter. The fetched engine, HTTP client and Rust dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md). No Google affiliation is implied.
 
 
+[Supported features and limits](docs/current-coverage.md).

@@ -9,7 +9,7 @@ const fixture = (name: string) => loadNestedFixture('google-search', name);
 
 afterEach(() => vi.useRealTimers());
 
-describe('structured Google Search monitoring', () => {
+describe('Structured Google Search monitoring', () => {
   it('preserves opaque source redirects from an accepted embedded-runtime HTTP response', () => {
     const response = parseGoogleSearchMonitorHtml(fixture('aio-sky-simplified-http.html'), request, { sourceUrl });
     expect(response.success).toBe(true);
