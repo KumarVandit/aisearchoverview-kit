@@ -1,3 +1,4 @@
+import { googleChallengeRedirect } from '../google-search/access.js';
 import { AiSearchError } from '../errors.js';
 
 export interface TrafficOptions {
@@ -69,7 +70,8 @@ export function coordinatedSearchFetch(fetcher:typeof fetch, options?:TrafficOpt
           const response = await fetcher(job.input,job.init);
           // Keep the slot until the response body arrives while preserving the original Response URL and body.
           const body = await response.clone().text();
-          const denied = response.status === 403 || response.status === 429 || (response.status === 200 && /(?:Our systems have detected unusual traffic from your computer network|id=["']captcha-form["'])/i.test(body));
+          const challengeRedirect = googleChallengeRedirect(job.input instanceof Request ? job.input.url : String(job.input),response.status,response.headers.get('Location'));
+          const denied = challengeRedirect || response.status === 403 || response.status === 429 || (response.status === 200 && /(?:Our systems have detected unusual traffic from your computer network|id=["']captcha-form["'])/i.test(body));
           if (denied) {
             denialStatus = response.status === 200 ? 403 : response.status;
             blockedUntil = Math.max(blockedUntil,Date.now() + Math.max(cooldown,retryAfter(response.headers,Date.now())));

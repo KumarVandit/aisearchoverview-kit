@@ -1,3 +1,4 @@
+import { googleChallengeRedirect } from './access.js';
 import { GoogleSearchError } from './errors.js';
 import { parseGoogleAutocomplete, parseGoogleSearchHtml } from './parsers.js';
 import { browserAiOverview } from './browser.js';
@@ -73,7 +74,7 @@ export class GoogleSearchClient {
     }
     const { response, body } = await this.request(endpoint, options.signal, true);
     const report = parseGoogleSearchHtml(body, {
-      sourceUrl: response.url || endpoint.toString(), query, httpStatus: response.status, includeRawHtml: options.includeRawHtml,
+      sourceUrl: response.url || endpoint.toString(), query, httpStatus: response.status, redirectLocation: response.headers.get('Location') ?? undefined, includeRawHtml: options.includeRawHtml,
     });
     const delay = retryAfter(response.headers.get('Retry-After'));
     if (delay !== undefined) report.retryAfterMs = delay;
@@ -109,12 +110,12 @@ export class GoogleSearchClient {
     try {
       const { response, body } = await Promise.race([
         (async () => {
-          const response = await this.fetcher(url.toString(), { method: 'GET', signal: controller.signal });
+          const response = await this.fetcher(url.toString(), { method: 'GET', signal: controller.signal, ...(allowBlocked ? { redirect: 'manual' as const } : {}) });
           return { response, body: await response.text() };
         })(),
         interrupted,
       ]);
-      if (!response.ok && !(allowBlocked && [403, 429].includes(response.status))) {
+      if (!response.ok && !(allowBlocked && ([403, 429].includes(response.status) || googleChallengeRedirect(url.toString(), response.status, response.headers.get('Location'))))) {
         throw new GoogleSearchError(`Google Search HTTP ${response.status}`, 'http', response.status, retryAfter(response.headers.get('Retry-After')));
       }
       return { response, body };

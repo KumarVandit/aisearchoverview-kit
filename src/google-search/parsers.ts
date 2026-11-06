@@ -1,3 +1,4 @@
+import { googleChallengeRedirect } from './access.js';
 import { overviewProductLinks, productViewerNotice, productViewerUrl, productViewerTitle } from './related-links.js';
 import { overviewVideos, sourceDescription } from './assets.js';
 import { GoogleSearchError } from './errors.js';
@@ -290,7 +291,7 @@ export function parseGoogleSearchHtml(html: string, options: ParseGoogleSearchOp
   const candidates = root ? organicResults(root, nodes, source.toString()) : [];
   const renderedOverview = overview(google ? nodes : [], source, false);
   let status: GoogleSearchStatus = 'unrecognized';
-  if (google && (httpStatus === 403 || httpStatus === 429 || blockedPage(nodes, source, text))) status = 'blocked';
+  if (google && (httpStatus === 403 || httpStatus === 429 || googleChallengeRedirect(source.toString(), httpStatus, options.redirectLocation) || blockedPage(nodes, source, text))) status = 'blocked';
   else if (google && (source.hostname === 'consent.google.com' || nodes.some(node => node.tag === 'form' && /consent\.google\.com/.test(node.attrs.action ?? '')))) status = 'consent-required';
   else if (google && candidates.length === 0 && renderedOverview.status !== 'present' && (nodes.some(node => node.tag === 'a' && /\/httpservice\/retry\/enablejs\b/.test(node.attrs.href ?? '')) || /\/httpservice\/retry\/enablejs\b/.test(html))) status = 'javascript-required';
   const readable = google && source.pathname === '/search' && status === 'unrecognized' && httpStatus >= 200 && httpStatus < 300;

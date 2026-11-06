@@ -76,6 +76,7 @@ Commands print JSON. `get`/`parse` exit 0 for a present answer, 2 for a blocked 
 | Entry | Use |
 | --- | --- |
 | `aisearchoverview-kit` | `sdk()`, Overview/source namespaces, public result types and typed errors. |
+| `aisearchoverview-kit/workers` | Fetch-only SDK for Workers; live Overview retrieval is not verified. [Worker support](docs/workers.md). |
 | `aisearchoverview-kit/advanced` | Low-level Search client, parsers, optional caller-owned browser adapter and monitoring-envelope converters. |
 
 The main API focuses on Google AI Overviews. AI Mode supports saved conversation parsing, including follow-up turns. Live AI Mode retrieval is experimental; reliable live conversations are not currently supported.
