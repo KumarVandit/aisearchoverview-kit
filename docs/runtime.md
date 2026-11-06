@@ -20,3 +20,4 @@ The SDK's default `embedded` transport sends HTTP requests and runs the local he
 
 Every embedded request uses a fresh anonymous HTTP session, establishes Google homepage cookies, requests Search and permits at most one computed same-origin/same-query transition. Only that session's JavaScript-readable cookies enter the helper. HttpOnly cookies remain in the HTTP client. Values and computed navigation are not printed in SDK results. TLS verification remains enabled, and traffic redirects are not followed automatically.
 
+The helper's [process/build contract](../tools/google-search-bootstrap/README.md) documents its limits and licenses.

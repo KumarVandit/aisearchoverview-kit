@@ -1,20 +1,23 @@
-# Current development coverage
+# Supported features and limits
 
+| Feature | Support | Limits |
+| --- | --- | --- |
+| `overview.get/parse/batch` | Answer text, Markdown, sources, citation groups and source descriptions | Availability varies; completeness remains unverified |
+| Overview videos | Recognized YouTube cards, titles, links, channels and timing | Other video layouts may be omitted |
+| Overview product references | Google product-viewer links | Merchant offers and prices are not provided |
+| `search.get/parse` | Organic results, People Also Ask questions, related searches and Overview | Full Search page coverage is not supported |
+| `aiMode.parse` | Saved conversation turns, prompts, sources, place cards and images | Fields are included only when present in the supplied HTML |
+| `aiMode.get` | Experimental retrieval with explicit access states | Successful live retrieval is not verified |
+| AI Mode follow-up sending | Not supported | Use saved conversation parsing |
+| Ads, maps and advanced shopping | Not supported | No complete rendering or asset coverage guarantee |
 
-
-
-
-Real Markdown regressions cover code whitespace, tables, inline product links and list ownership. Preview generation uses GFM rendering to catch errors that plain-text equality misses:
-
-```sh
-npx tsx scripts/preview-layouts.ts --output .probe/layout-preview
-```
-
-Open the generated `index.html` to compare Markdown source and rendered content. This is a fixture preview, not a Google pixel clone. Public image references may expire and some fixtures deliberately remove payloads. Browser locale parameters are hints; the existing signed-in browser is not proof of a US network location.
+Markdown supports recognized code blocks, tables, lists and inline links. Asset URLs are references and may expire. Unrecognized layouts return an unverified state; missing fields do not establish that a feature was absent from the rendered page.
 
 ## Traffic controls
 
 ```ts
+import { sdk } from 'aisearchoverview-kit';
+
 const client = sdk({
   traffic: { maxConcurrent: 2, minIntervalMs: 1000, cooldownMs: 60_000 },
 });
@@ -24,7 +27,6 @@ const results = await client.overview.batch(queries, {
 });
 ```
 
-Pacing is opt-in and shared across this client's Overview, Search and experimental AI Mode fetches. It limits SDK fetch starts, not the driver's two or three internal upstream exchanges. It does not coordinate different client instances, processes or machines. An observed denial pauses new requests; Retry-After can extend that pause. It does not retry the denied request. Some intermediate runtime failures remain generic and cannot yet be classified by this layer.
+Pacing is opt-in and shared across one client's Overview, Search and experimental AI Mode requests. It limits SDK request starts; a request can involve multiple upstream HTTP exchanges. It does not coordinate separate clients, processes or machines. Recognized access denials pause new requests, and Retry-After can extend that pause. Denied requests are not automatically retried. Some runtime failures are reported as generic network errors.
 
-Deduplication is opt-in, exact-query, and limited to one batch. It preserves result order and independent output objects. It does not introduce a persistent answer cache or silently change cross-batch freshness. In the measured four-query repeated workload it can reduce 100 scheduled fetches to four; this is workload-specific, not a universal saving.
-
+Deduplication is opt-in, uses exact query strings, and applies within one batch. Results retain input order and independent output objects. There is no persistent answer cache.

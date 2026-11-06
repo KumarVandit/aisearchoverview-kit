@@ -1,6 +1,6 @@
 # Architecture
 
-The root SDK follows googlemaps-kit's client and namespace pattern, with an API centered on the user's task rather than a hosted monitoring platform.
+The SDK uses a client and namespace API organized around retrieval, parsing, and batch collection.
 
 | Module | Responsibility |
 | --- | --- |
@@ -20,4 +20,3 @@ The internal parser never generates a substitute answer. It associates recognize
 
 No hosted account platform, API-key billing, unrelated AI engines or remote task queue is implied. The internal monitoring-envelope converters remain available through `advanced` for existing integrations, but they do not define the main SDK. Browser-backed adapters are optional advanced controls; no browser dependency is installed.
 
-This product was extracted from googlemaps-kit. Books and Gemini retain their generic HTML utility there; Search clients, fixtures, tests, documentation and the embedded helper belong here. The Maps package does not depend on this package or forward Search calls to it.
