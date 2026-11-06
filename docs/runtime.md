@@ -21,3 +21,26 @@ The SDK's default `embedded` transport sends HTTP requests and runs the local he
 Every embedded request uses a fresh anonymous HTTP session, establishes Google homepage cookies, requests Search and permits at most one computed same-origin/same-query transition. Only that session's JavaScript-readable cookies enter the helper. HttpOnly cookies remain in the HTTP client. Values and computed navigation are not printed in SDK results. TLS verification remains enabled, and traffic redirects are not followed automatically.
 
 The helper's [process/build contract](../tools/google-search-bootstrap/README.md) documents its limits and licenses.
+
+## Hosted access and recovery
+
+The npm package cannot guarantee that Google accepts a hosting provider's network or shows an Overview for a query. A paid container permits the runtime to execute; it does not grant Google access. Match the host region to your intended search market. Search's `country` and `location` hints do not change the server's IP location.
+
+Recognized challenge redirects, HTTP denials and CAPTCHA pages return `status: 'blocked'`. `metadata.httpStatus` preserves the observed status, including a challenge delivered as HTTP 302. `metadata.retryAfterMs` provides a pause hint when available. Regional redirects return `unverified` with an explanatory reason. No redirect is followed automatically, and neither case is reported as a confirmed absent Overview.
+
+Reuse one client per service to apply its opt-in traffic controls across requests:
+
+```ts
+const client = sdk({
+  traffic: { maxConcurrent: 1, minIntervalMs: 10_000, cooldownMs: 60_000 },
+});
+const result = await client.overview.get(query);
+if (result.status === 'blocked') {
+  // Defer work; the same client rejects queued calls without contacting Google.
+  console.log(result.metadata.retryAfterMs, result.reason);
+}
+```
+
+These settings are example service limits, not a verified Google allowance. Creating another client, restarting a container, or automatically retrying a challenge is not recovery. Surface the unavailable state, honor the pause, and use an earlier successful report only when its age and query settings are shown. Persist cooldown state outside the process if your service spans instances or restarts.
+
+Runtime execution timeouts throw `AiSearchError` with `kind: 'timeout'`; unsupported bootstrap execution throws with `kind: 'parse'`. Initialization/network failures retain `kind: 'network'`. Runtime limits remain bounded: the helper has at most ten seconds within the nineteen-second retrieval budget. Increasing only the SDK timeout does not extend these limits. A slower host may need more CPU; do not treat a timeout as proof Google denied access.

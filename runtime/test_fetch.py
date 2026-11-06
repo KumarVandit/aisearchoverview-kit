@@ -79,10 +79,27 @@ class FetchTests(unittest.TestCase):
         session = Session()
         session.get = lambda url, **kwargs: types.SimpleNamespace(status_code=302, url=url, headers={}, content=b'blocked')
         with patch.object(driver.requests, 'Session', return_value=session), patch.object(driver.subprocess, 'Popen') as execute:
-            with self.assertRaises(RuntimeError):
-                driver.fetch(URL, sys.executable)
+            result = driver.fetch(URL, sys.executable)
+            self.assertEqual(result['access']['kind'], 'redirect')
             execute.assert_not_called()
         self.assertTrue(session.closed)
+
+    def test_challenge_redirects_stop_before_search_and_never_export_redirect_tokens(self):
+        session = Session()
+        session.get = lambda url, **kwargs: types.SimpleNamespace(status_code=302, url=url, headers={'Location': 'https://www.google.com/sorry/index?continue=private-token'}, content=b'')
+        with patch.object(driver.requests, 'Session', return_value=session), patch.object(driver.subprocess, 'Popen') as execute:
+            result = driver.fetch(URL, sys.executable)
+            self.assertEqual(result['access'], {'kind': 'blocked', 'status': 302})
+            self.assertNotIn('private-token', json.dumps(result))
+            execute.assert_not_called()
+        self.assertTrue(session.closed)
+
+    def test_regional_and_unrecognized_redirects_are_not_reported_as_denials(self):
+        for target, expected in [('https://www.google.com.hk/url?url=private-token', 'regional-redirect'), ('https://example.com/sorry/index', 'redirect'), ('https://www.google.com.evil.example/sorry/index', 'redirect')]:
+            response = {'status': 302, 'url': URL, 'headers': {'Location': target}, 'body': ''}
+            result = driver.classified(response)
+            self.assertEqual(result['access']['kind'], expected)
+            self.assertNotIn('Location', result['headers'])
 
     def test_redirect_and_plain_results_are_not_retried_or_executed(self):
         for status in [200, 302, 429]:

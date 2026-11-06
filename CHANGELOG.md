@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 — 2026-11-06
+
+- Return recognized native transport access challenges as `blocked`, preserving the actual upstream HTTP status and a cooldown hint.
+- Keep regional and unsupported redirects explicitly `unverified`; do not follow redirects or report them as missing Overviews.
+- Preserve safe runtime timeout, initialization and bootstrap failure reasons without exposing child-process output, cookies or redirect query strings.
+- Extend opt-in per-client traffic cooldowns to challenges returned by the embedded runtime, including queued requests.
+- Run the Python driver regression suite in CI alongside the Node tests.
+
 ## 0.3.0 — 2026-11-06
 
 - Extract simplified Google organic-result cards, snippets and displayed URLs while excluding advertisements and Overview cards.

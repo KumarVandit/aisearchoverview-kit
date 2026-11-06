@@ -101,6 +101,12 @@ function failure(error: unknown, meta: GoogleSearchMonitorMetadata): GoogleSearc
   if (error instanceof GoogleSearchError) {
     if (error.status !== undefined) meta.httpStatus = error.status;
     if (error.retryAfterMs !== undefined) meta.retryAfterMs = error.retryAfterMs;
+    if(error.access){
+      meta.searchStatus=error.access==='blocked'?'blocked':'unrecognized';
+      meta.aiOverview.status=meta.aiOverview.requested?(error.access==='blocked'?'blocked':'unverified'):'not-requested';
+      meta.aiOverview.reason=error.message;
+      return {success:false,error:{code:error.access==='blocked'?'BLOCKED':error.access==='regional-redirect'?'REGIONAL_REDIRECT':'REDIRECT_UNVERIFIED',message:error.message},metadata:meta};
+    }
   }
   if (error instanceof ValidationError) return { success: false, error: { code: 'VALIDATION_ERROR', message: error.message, details: error.details }, metadata: meta };
   const code = error instanceof GoogleSearchError ? `${error.kind.toUpperCase()}_ERROR` : 'CONFIGURATION_ERROR';

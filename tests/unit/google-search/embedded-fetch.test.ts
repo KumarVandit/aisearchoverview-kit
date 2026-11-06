@@ -1,6 +1,7 @@
 import {execFile, type ChildProcess} from 'node:child_process';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {embeddedSearchFetch} from '../../../src/transport/embedded.js';
+import {sdk} from '../../../src/index.js';
 vi.mock('node:child_process', () => ({execFile: vi.fn()}));
 const execute = vi.mocked(execFile);
 const url = 'https://www.google.com/search?q=example&hl=en&gl=us';
@@ -13,6 +14,27 @@ function output(value: unknown, error: Error | null = null): void {
 }
 beforeEach(() => { execute.mockReset(); });
 describe('embedded Search fetch bridge', () => {
+  it('reports challenge redirects as blocked and preserves upstream status without exposing tokens',async()=>{
+    output({status:302,body:'',url:'https://www.google.com/',headers:{'Retry-After':'120'},access:{kind:'blocked',status:302}});
+    const fetch=embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'});
+    const client=sdk({fetch,traffic:{minIntervalMs:0,cooldownMs:1000}});
+    const first=await client.overview.get('example');
+    expect(first).toMatchObject({status:'blocked',sources:[],metadata:{httpStatus:302,retryAfterMs:120000}});
+    const second=await client.overview.get('example');
+    expect(second.status).toBe('blocked');expect(second.reason).toContain('no upstream request was sent');
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+  it('keeps a regional redirect unverified rather than a network failure or access denial',async()=>{
+    output({status:302,body:'',url,headers:{},access:{kind:'regional-redirect',status:302}});
+    const response=await sdk({fetch:embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'})}).overview.get('example');
+    expect(response.status).toBe('unverified');expect(response.reason).toContain('regional Search');
+    expect(response.metadata.httpStatus).toBe(302);expect(execute).toHaveBeenCalledTimes(1);
+  });
+  it.each([['RUNTIME_TIMEOUT','timeout'],['BOOTSTRAP_FAILED','parse'],['BOOTSTRAP_INCOMPLETE','parse'],['NETWORK_ERROR','network']])('preserves the safe runtime failure %s through the SDK',async(code,kind)=>{
+    output({error:{code,message:'private-cookie-do-not-expose'}},new Error('raw process details do-not-expose'));
+    await expect(sdk({fetch:embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'})}).overview.get('example')).rejects.toMatchObject({kind});
+    try{await embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'})(url);}catch(error){expect(String(error)).not.toContain('do-not-expose');}
+  });
   it('passes the fixed driver and caller-owned executable as separate arguments and preserves the response', async () => {
     output({status:200,body:'<html>actual response</html>',url:url+'&sei=private',headers:{'Content-Type':'text/html'}});
     const fetcher=embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap',pythonExecutable:'/trusted/python'});

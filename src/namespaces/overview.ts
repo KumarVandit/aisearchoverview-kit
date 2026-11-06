@@ -21,7 +21,7 @@ export function overviewResult(report: GoogleSearchMonitorResponse, query: strin
     metadata: {
       ...(options.location!==undefined?{location:options.location}:{}),...(options.device?{device:options.device}:{}),country: options.country ?? config.locale?.country ?? 'US', language: options.language ?? config.locale?.language ?? 'en',
       transport: snapshot ? 'snapshot' as const : config.transport ?? 'embedded', durationMs: report.metadata.timing?.totalMs ?? 0,
-      httpStatus: report.metadata.httpStatus, sourceUrl: report.metadata.sourceUrl, completeness: 'unverified' as const,
+      httpStatus: report.metadata.httpStatus,...(report.metadata.retryAfterMs!==undefined?{retryAfterMs:report.metadata.retryAfterMs}:{}), sourceUrl: report.metadata.sourceUrl, completeness: 'unverified' as const,
       warnings: report.metadata.warnings,
     },
   };

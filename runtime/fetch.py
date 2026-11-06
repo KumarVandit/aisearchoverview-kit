@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -11,6 +12,35 @@ from curl_cffi import requests, CurlHttpVersion
 
 MAX_BYTES = 4 * 1024 * 1024
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) mgbrowser/0.9.32'
+
+
+class DriverError(RuntimeError):
+    def __init__(self, code):
+        self.code = code
+        super().__init__(code)
+
+
+def access_state(response):
+    status = response['status']
+    if status in (403, 429) or (status == 200 and re.search(r'Our systems have detected unusual traffic from your computer network|id=["\x27]captcha-form["\x27]', response['body'], re.I)):
+        return {'kind': 'blocked', 'status': status}
+    if status in (301, 302, 303, 307, 308):
+        target = urllib.parse.urlsplit(urllib.parse.urljoin(response['url'], response['headers'].get('Location', '')))
+        kind = 'redirect'
+        if target.scheme == 'https' and target.hostname in ('www.google.com', 'google.com') and target.path.startswith('/sorry'):
+            kind = 'blocked'
+        elif target.scheme == 'https' and target.hostname in ('www.google.com.hk', 'google.com.hk') and target.path in ('/url', '/search'):
+            kind = 'regional-redirect'
+        return {'kind': kind, 'status': status}
+    return None
+
+
+def classified(response):
+    access = access_state(response)
+    response['headers'].pop('Location', None)
+    if access:
+        response['access'] = access
+    return response
 
 
 def checked_url(value, original=None):
@@ -37,7 +67,7 @@ def request(session, url, deadline):
     return {
         'status': response.status_code,
         'url': response.url,
-        'headers': {key: response.headers[key] for key in ['Content-Type', 'Retry-After'] if key in response.headers},
+        'headers': {key: response.headers[key] for key in ['Content-Type', 'Retry-After', 'Location'] if key in response.headers},
         'body': response.content.decode('utf-8', errors='replace'),
     }
 
@@ -56,9 +86,13 @@ def fetch(url, executable):
     try:
         jar = session.cookies.jar
         homepage = request(session, 'https://www.google.com/', deadline)
+        if access_state(homepage):
+            return classified(homepage)
         if homepage['status'] != 200:
-            raise RuntimeError('Anonymous Google homepage was not available')
+            raise DriverError('HOMEPAGE_UNAVAILABLE')
         first = request(session, url, deadline)
+        if access_state(first):
+            return classified(first)
         result = first
         metrics = {'homepageStatus': homepage['status'], 'initialStatus': first['status'], 'bootstrapExecuted': False}
         html = first['body']
@@ -69,7 +103,7 @@ def fetch(url, executable):
             try:
                 stdout, stderr = process.communicate(payload, timeout=min(10, max(0.01, deadline - time.monotonic())))
                 if process.returncode:
-                    raise RuntimeError('Embedded bootstrap failed; no automatic retry')
+                    raise DriverError('BOOTSTRAP_FAILED')
                 if len(stdout) > 128 * 1024:
                     raise ValueError('Bootstrap output exceeds size limit')
                 computed = json.loads(stdout)
@@ -78,10 +112,10 @@ def fetch(url, executable):
                     process.kill()
                     process.wait()
             if computed.get('errors') or computed.get('engine', {}).get('fatal_reason') or computed.get('fetchRequestsNotExecuted'):
-                raise RuntimeError('Embedded bootstrap did not complete without errors or pending network requests')
+                raise DriverError('BOOTSTRAP_INCOMPLETE')
             target = computed.get('navigationUrl')
             if not target:
-                raise RuntimeError('Embedded bootstrap returned no navigation')
+                raise DriverError('BOOTSTRAP_NO_NAVIGATION')
             checked_url(target, url)
             for write in computed.get('cookieWrites', []):
                 pair = write.split(';', 1)[0]
@@ -93,7 +127,7 @@ def fetch(url, executable):
             metrics.update({'bootstrapExecuted': True, 'bootstrapMs': computed['elapsedMs'], 'runtime': computed['runtime']})
         metrics['totalMs'] = round((time.monotonic() - started) * 1000)
         result['metrics'] = metrics
-        return result
+        return classified(result)
     finally:
         session.close()
 
@@ -109,5 +143,6 @@ if __name__ == '__main__':
             raise ValueError('Expected Search URL and bootstrap executable')
         print(json.dumps(fetch(sys.argv[1], sys.argv[2])))
     except Exception as error:
-        print(json.dumps({'error': {'type': type(error).__name__, 'message': 'Browserless Search failed: ' + type(error).__name__}}))
+        code = error.code if isinstance(error, DriverError) else 'RUNTIME_TIMEOUT' if isinstance(error, (TimeoutError, subprocess.TimeoutExpired)) or getattr(error, 'code', None) == 28 else 'INVALID_RESPONSE' if isinstance(error, (ValueError, json.JSONDecodeError)) else 'NETWORK_ERROR'
+        print(json.dumps({'error': {'type': type(error).__name__, 'code': code}}))
         sys.exit(1)
