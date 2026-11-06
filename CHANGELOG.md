@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 — 2026-11-06
+
+- Extract simplified Google organic-result cards, snippets and displayed URLs while excluding advertisements and Overview cards.
+- Resolve citation and organic URLs together with `search.get(query, { resolveSources: true })`; preserve original redirect URLs.
+- Honor Google-declared redirect waits, isolate request-scoped cookies, limit lookup concurrency and spacing, and expose resolution counts and total timing.
+- Add canonical location hints and explicit native desktop-profile options. These do not guarantee a physical IP location or Chrome rendering.
+- Normalize inline markup in citation labels.
+
 ## 0.2.1 — 2026-11-06
 
 - Focus public documentation on installation, SDK usage, supported features and limitations.

@@ -1,3 +1,4 @@
+import { locationHint, validateDevice } from './location.js';
 import { GoogleSearchError } from './errors.js';
 import { parseGoogleAutocomplete, parseGoogleSearchHtml } from './parsers.js';
 import { browserAiOverview } from './browser.js';
@@ -63,6 +64,8 @@ export class GoogleSearchClient {
     endpoint.searchParams.set('q', queryValue(query));
     endpoint.searchParams.set('hl', options.language ?? this.language);
     endpoint.searchParams.set('gl', options.country ?? this.country);
+    validateDevice(options.device);
+    if(options.location!==undefined)endpoint.searchParams.set('uule',locationHint(options.location));
     if (options.start !== undefined) {
       if (!Number.isSafeInteger(options.start) || options.start < 0) throw new RangeError('start must be a nonnegative safe integer');
       endpoint.searchParams.set('start', String(options.start));

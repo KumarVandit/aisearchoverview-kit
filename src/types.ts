@@ -39,6 +39,8 @@ export interface OverviewVideo {
 }
 
 export interface OverviewMetadata {
+  location?: string;
+  device?: 'desktop';
   country: string;
   language: string;
   transport: 'embedded' | 'http' | 'snapshot';
@@ -60,6 +62,10 @@ export type OverviewResult = (OverviewBase & { status: 'present'; text: string; 
   | (OverviewBase & { status: 'blocked' | 'unverified'; text?: never; markdown?: never });
 
 export interface OverviewOptions {
+  /** Canonical location hint, e.g. Austin,Texas,United States; not an IP-location guarantee. */
+  location?: string;
+  /** The native transport uses a desktop-style 1024×768 profile. */
+  device?: 'desktop';
   country?: string;
   language?: string;
   /** Includes Markdown by default. */

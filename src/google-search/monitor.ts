@@ -1,3 +1,4 @@
+import { locationHint, validateDevice } from './location.js';
 import { GoogleSearchError } from './errors.js';
 import { parseGoogleSearchHtml } from './parsers.js';
 import type {
@@ -14,6 +15,8 @@ class ValidationError extends TypeError {
 }
 
 interface NormalizedRequest {
+  location?: string;
+  device?: 'desktop';
   query: string;
   country: string;
   language?: string;
@@ -30,7 +33,7 @@ function normalize(value: unknown): NormalizedRequest {
   const details: Array<{ field: string; message: string }> = [];
   const issue = (field: string, message: string) => details.push({ field, message });
   if (!record(value)) throw new ValidationError([{ field: 'body', message: 'Expected a JSON object' }]);
-  for (const field of Object.keys(value)) if (!['query', 'country', 'gl', 'hl', 'include'].includes(field)) issue(field, 'Unsupported field');
+  for (const field of Object.keys(value)) if (!['query', 'country', 'gl', 'hl', 'include', 'location', 'device'].includes(field)) issue(field, 'Unsupported field');
   if (typeof value.query !== 'string' || !value.query.trim() || value.query.length > 10_000) issue('query', 'Expected a nonempty string of at most 10000 characters');
   if (value.country !== undefined && (typeof value.country !== 'string' || !/^[A-Z]{2}$/.test(value.country))) issue('country', 'Expected an uppercase two-letter country code');
   if (value.gl !== undefined && (typeof value.gl !== 'string' || !/^[a-z]{2}$/i.test(value.gl))) issue('gl', 'Expected a two-letter country code');
@@ -55,8 +58,10 @@ function normalize(value: unknown): NormalizedRequest {
       } else if (aio !== undefined) issue('include.aioverview', 'Expected a boolean or an object with an optional markdown flag');
     }
   }
+  try{if(value.location!==undefined)locationHint(value.location as string);}catch(error){issue('location',error instanceof Error?error.message:'Invalid location');}
+  try{validateDevice(value.device);}catch(error){issue('device',error instanceof Error?error.message:'Invalid device');}
   if (details.length) throw new ValidationError(details);
-  return { query: value.query as string, country: String(value.country ?? value.gl).toLowerCase(), language: value.hl as string | undefined, overview, markdown, rawHtml };
+  return { location:value.location as string|undefined,device:value.device as 'desktop'|undefined,query: value.query as string, country: String(value.country ?? value.gl).toLowerCase(), language: value.hl as string | undefined, overview, markdown, rawHtml };
 }
 
 function redirectLink(value: string): string | undefined {
@@ -81,7 +86,7 @@ function overviewResult(overview: GoogleAiOverview, markdown: boolean): GoogleSe
 function metadata(request: NormalizedRequest | undefined, transport: GoogleSearchMonitorMetadata['transport'], overview?: GoogleAiOverview): GoogleSearchMonitorMetadata {
   return {
     transport,
-    ...(request ? { query: request.query } : {}),
+    ...(request ? { query: request.query,...(request.location!==undefined?{location:request.location}:{}),...(request.device?{device:request.device}:{}) } : {}),
     aiOverview: {
       requested: request?.overview ?? false,
       status: request?.overview ? overview?.status ?? 'unverified' : 'not-requested',
@@ -162,8 +167,9 @@ export async function requestGoogleSearchMonitor(client: MonitorClient, request:
     if (options.signal?.aborted) throw options.signal.reason;
     normalized = normalize(request);
     if (options.transport !== undefined && options.transport !== 'http' && options.transport !== 'browser') throw new ValidationError([{ field: 'transport', message: 'Expected http or browser' }]);
+    if (transport === 'browser' && (normalized.location!==undefined || normalized.device!==undefined)) throw new ValidationError([{field:'location',message:'Location/device targeting is supported only by HTTP transport'}]);
     if (transport === 'http' && options.browser !== undefined) throw new ValidationError([{ field: 'browser', message: 'Browser options require browser transport' }]);
-    const locale = { language: normalized.language, country: normalized.country, signal: options.signal };
+    const locale = { language: normalized.language, country: normalized.country, location:normalized.location, device:normalized.device, signal: options.signal };
     if (transport === 'http') {
       retrievalStart = performance.now();
       const response = await client.search(normalized.query, { ...locale, includeRawHtml: normalized.rawHtml });

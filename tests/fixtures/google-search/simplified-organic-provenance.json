@@ -1,0 +1,9 @@
+{
+  "kind": "sanitized-live-projection",
+  "capturedAt": "2026-11-06T15:07:48.715Z",
+  "query": "how does intermittent fasting work",
+  "transport": "embedded native SDK",
+  "originalSha256": "c46ed6f5ca3ef22cc56469a2a131f798f64dc372d4c638127bb705b050e471a0",
+  "fixtureSha256": "81488f07b7e1614b8968c9fb4322c11e309d02f9f77c60e59beb51470c42f416",
+  "sanitization": "Retained first two organic result cards and their class structure/text; removed scripts, frames, images, forms and all attributes except class/href. Replaced every redirect URL with an explicitly synthetic opaque token. This is a reduced projection, not a full Search response."
+}

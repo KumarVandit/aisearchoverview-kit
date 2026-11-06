@@ -37,9 +37,10 @@ export class AiSearchOverviewClient {
     const normalized = { ...config, transport };
     const searchClient = new GoogleSearchClient({ fetch: fetcher, timeoutMs });
     this.overview = new OverviewNamespace(searchClient, normalized, beforeGet);
-    this.search = new SearchNamespace(searchClient, normalized, beforeGet);
+    this.sources = new SourcesNamespace(config.fetch ?? globalThis.fetch, config.timeoutMs ?? 60_000);
+    this.search = new SearchNamespace(searchClient, normalized, beforeGet, this.sources);
     this.aiMode = new AiModeNamespace(fetcher, normalized, beforeGet);
-    this.sources = new SourcesNamespace(config.fetch ?? globalThis.fetch, timeoutMs);
+
   }
 }
 

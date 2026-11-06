@@ -12,3 +12,5 @@ export type * from './ai-mode/types.js';
 export { SearchNamespace } from './namespaces/search.js';
 export type { SearchOptions, ParseSearchOptions, SearchResult } from './namespaces/search.js';
 export type { TrafficOptions } from './transport/coordinator.js';
+
+export type { ResolveSourcesOptions } from './namespaces/sources.js';
