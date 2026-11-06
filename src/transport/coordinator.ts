@@ -1,4 +1,5 @@
 import { AiSearchError } from '../errors.js';
+import { GoogleSearchError } from '../google-search/errors.js';
 
 export interface TrafficOptions {
   /** Per-client limit; defaults to one when traffic controls are enabled. */
@@ -48,7 +49,7 @@ export function coordinatedSearchFetch(fetcher:typeof fetch, options?:TrafficOpt
   for (const [name,value] of [['minIntervalMs',interval],['cooldownMs',cooldown]] as const) if (!Number.isFinite(value) || value < 0 || value > MAX_DELAY) throw new AiSearchError('traffic.' + name + ' must be a bounded nonnegative number','configuration');
   const queue:Job[] = [];
   let active = 0, nextStart = 0, blockedUntil = 0, denialStatus = 429, timer:ReturnType<typeof setTimeout> | undefined;
-  const pauseError = () => new AiSearchError('This client is paused after a Google access denial until ' + new Date(blockedUntil).toISOString() + '; no upstream request was sent.','http',denialStatus);
+  const pauseError = () => new GoogleSearchError('This client is paused after a Google access denial until ' + new Date(blockedUntil).toISOString() + '; no upstream request was sent.','http',denialStatus,Math.max(0,blockedUntil-Date.now()),{access:'blocked'});
   const finish = (job:Job, response?:Response, error?:unknown) => {
     if (job.settled) return;
     job.settled = true;
@@ -75,7 +76,13 @@ export function coordinatedSearchFetch(fetcher:typeof fetch, options?:TrafficOpt
             blockedUntil = Math.max(blockedUntil,Date.now() + Math.max(cooldown,retryAfter(response.headers,Date.now())));
           }
           finish(job,response);
-        } catch (error) { finish(job,undefined,error); }
+        } catch (error) {
+          if(error instanceof GoogleSearchError&&error.access==='blocked'){
+            denialStatus=error.status===429?429:403;
+            blockedUntil=Math.max(blockedUntil,Date.now()+Math.max(cooldown,error.retryAfterMs??0));
+          }
+          finish(job,undefined,error);
+        }
         finally { active--; pump(); }
       })();
     }

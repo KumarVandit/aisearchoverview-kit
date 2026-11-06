@@ -46,6 +46,8 @@ export interface OverviewMetadata {
   transport: 'embedded' | 'http' | 'snapshot';
   durationMs: number;
   httpStatus?: number;
+  /** Remaining upstream/client cooldown when an access denial is observed. */
+  retryAfterMs?: number;
   sourceUrl?: string;
   completeness: 'unverified';
   warnings: string[];
