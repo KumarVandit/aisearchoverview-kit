@@ -13,7 +13,7 @@ export default {
 };
 ```
 
-This entry point provides runtime compatibility, not verified live Overview retrieval. All seven property queries tested on a deployed Free-plan Worker on November 6, 2026 received Google access-challenge redirects. None returned verified Overview text or citations. Do not use this entry point as a proven replacement for embedded retrieval.
+This entry point provides runtime compatibility, not verified live Overview retrieval. All seven property queries tested on a deployed Free-plan Worker on November 6, 2026 received Google access-challenge redirects. None returned verified Overview text or citations. Follow-up tests of homepage initialization, request-scoped server cookies, and desktop/mobile headers on a representative query also failed before any answer markup was returned. Do not use this entry point as a proven replacement for embedded retrieval.
 
 `overview.parse()` can extract recognized Overview text and citations from supplied HTML without making requests. `overview.get()` uses ordinary fetch; missing or unsupported answer markup remains unverified. Access or HTTP failures remain explicit. No automatic session challenge solving or native-service fallback is included.
 
