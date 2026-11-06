@@ -1,6 +1,6 @@
 {
   "name": "aisearchoverview-kit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Typed SDK and CLI for actual Google AI Overview text, Markdown and citations",
   "type": "module",
   "main": "./dist/index.cjs",
