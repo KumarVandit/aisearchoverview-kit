@@ -41,7 +41,7 @@ export default {
       // Only small aggregate diagnostics are exposed; never return page/session data.
       const body=await response.text();
       diagnostic={...diagnostic,httpStatus:response.status,characters:body.length,sessionBootstrap:body.includes('knitsail')&&body.includes('var challenge_version='),javascriptRequired:/enable javascript|enablejs|\/httpservice\/retry\/enablejs/i.test(body),accessChallenge:/our systems have detected unusual traffic|g-recaptcha|\/sorry\/index/i.test(body)};
-      return new Response(body,{status:response.status,headers:{'Content-Type':response.headers.get('Content-Type')??'text/html'}});
+      return new Response(body,{status:response.status,headers:{'Content-Type':response.headers.get('Content-Type')??'text/html',...(response.headers.has('Location')?{Location:response.headers.get('Location')!}:{})}});
     };
     const start=Date.now();
     try {

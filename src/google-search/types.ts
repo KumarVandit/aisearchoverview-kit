@@ -208,6 +208,8 @@ export interface GoogleAutocompleteResponse {
 }
 
 export interface ParseGoogleSearchOptions {
+  /** Location from the actual HTTP response, used to classify access-denial redirects. */
+  redirectLocation?: string;
   sourceUrl: string;
   query?: string;
   httpStatus?: number;
