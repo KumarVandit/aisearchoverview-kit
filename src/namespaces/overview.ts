@@ -22,7 +22,7 @@ export function overviewResult(report: GoogleSearchMonitorResponse, query: strin
       country: options.country ?? config.locale?.country ?? 'US', language: options.language ?? config.locale?.language ?? 'en',
       transport: snapshot ? 'snapshot' as const : config.transport ?? 'embedded', durationMs: report.metadata.timing?.totalMs ?? 0,
       httpStatus: report.metadata.httpStatus, sourceUrl: report.metadata.sourceUrl, completeness: 'unverified' as const,
-      warnings: report.metadata.warnings.filter(warning => !warning.startsWith('This is a supported subset of the Cloro-style')),
+      warnings: report.metadata.warnings,
     },
   };
   if (data && report.metadata.aiOverview.status === 'present') return { ...base, status: 'present', text: data.text, ...(data.markdown !== undefined ? { markdown: data.markdown } : {}), ...(data.productLinks?.length ? { productLinks: data.productLinks.map(product => ({ ...product })) } : {}), ...(data.videos?.length ? { videos: data.videos.map(video => ({ ...video })) } : {}), ...(data.citationPills?.length ? { citationPills: data.citationPills.map(pill => ({ ...pill })) } : {}) };

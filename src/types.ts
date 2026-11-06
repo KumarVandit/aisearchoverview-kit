@@ -20,7 +20,7 @@ export interface OverviewCitationPill {
 export interface OverviewProductLink {
   position: number;
   title: string;
-  /** Google product viewer; not a merchant URL or Cloro-issued product token. */
+  /** Google product viewer; not a merchant URL or provider-issued product token. */
   url: string;
   productDocid: string;
 }

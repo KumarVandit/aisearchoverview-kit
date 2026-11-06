@@ -88,7 +88,7 @@ function metadata(request: NormalizedRequest | undefined, transport: GoogleSearc
       ...(request?.overview && overview ? { reason: overview.reason } : {}),
       completeness: 'unverified',
     },
-    warnings: ['This is a supported subset of the Cloro-style contract, not Cloro backend or retrieval parity.', 'Unextracted fields are omitted; source redirect destinations and answer completeness are not verified.'],
+    warnings: ['Unextracted fields are omitted; source redirect destinations and answer completeness are not verified.'],
   };
 }
 

@@ -78,12 +78,11 @@ Commands print JSON. `get`/`parse` exit 0 for a present answer, 2 for a blocked 
 | `aisearchoverview-kit` | `sdk()`, Overview/source namespaces, public result types and typed errors. |
 | `aisearchoverview-kit/advanced` | Low-level Search client, parsers, optional caller-owned browser adapter and monitoring-envelope converters. |
 
-The main API is focused on Google AI Overviews. AI Mode has experimental HTTP retrieval and tested snapshot parsing, including captured follow-up turns; reliable live conversations remain unresolved. ChatGPT, Gemini and other providers are outside this package. Cloro's public interfaces informed the request/response review; this package has its own implementation and purpose-based SDK, with no Cloro API calls or platform dependency. [Comparison](docs/cloro-comparison.md).
+The main API focuses on Google AI Overviews. AI Mode supports saved conversation parsing, including follow-up turns. Live AI Mode retrieval is experimental; reliable live conversations are not currently supported.
 
 ## Verification and limits
 
-The existing engine path was live-verified without a browser application. Earlier end-to-end command measurements returned sky in **1.26 s** with 7 sources and autumn leaves in **1.74 s** with 6 sources. These are individual observations; results, citations, eligibility and response times vary. Subsequent traffic failures are recorded in the [research ledger](docs/google-search-browserless-research.md).
-
+Overview retrieval uses the local embedded HTTP runtime. Results, citations, eligibility and response times vary by query and session. Answer presence and access states are reported explicitly.
 Expanded literal HTML transfers are decoded statically; response scripts are not executed by the answer parser. The separate native helper executes only the recognized session bootstrap and has no HTTP broker. Answer completeness remains unverified. Unresolved Google redirect URLs remain explicit until `sources.resolve()` is requested.
 
 ```sh
@@ -95,9 +94,9 @@ npm test
 
 Default tests are offline. `npm run test:live` opts into network probes; an access-state observation is not a successful Overview benchmark. Python driver tests use `python runtime/test_fetch.py` in an environment with the pinned HTTP client installed. Native input tests are available through Cargo after setup/source preparation.
 
-[Layout coverage audit](docs/layout-coverage.md) · [API and types](docs/api.md) · [Architecture](docs/architecture.md) · [Advanced controls](docs/advanced.md) · [Research evidence](docs/google-search-research.md)
+[API and types](docs/api.md) · [Architecture](docs/architecture.md) · [Advanced controls](docs/advanced.md)
 
 MIT for this SDK and adapter. The fetched engine, HTTP client and Rust dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md). No Google affiliation is implied.
 
 
-Current development coverage: [Google features and limits](docs/current-coverage.md), [live scaling measurements](docs/scale-audit.md), and [AI Mode protocol evidence](docs/ai-mode-protocol.md). These additions are unreleased.
+[Supported features and limits](docs/current-coverage.md).

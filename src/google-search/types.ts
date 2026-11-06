@@ -86,7 +86,7 @@ export interface GoogleAiOverviewVideo {
 export interface GoogleAiOverviewProductLink {
   position: number;
   title: string;
-  /** Google product-viewer URL, not a merchant URL or a Cloro product-result token. */
+  /** Google product-viewer URL, not a merchant URL or a provider-issued product token. */
   url: string;
   productDocid: string;
 }

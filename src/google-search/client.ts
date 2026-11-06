@@ -39,7 +39,7 @@ export class GoogleSearchClient {
     this.page = config.page;
   }
 
-  /** Returns the supported Cloro-style Search envelope; HTTP is the default and browser use is explicit. */
+  /** Returns the supported structured Search envelope; HTTP is the default and browser use is explicit. */
   monitor(request: GoogleSearchMonitorRequest, options: GoogleSearchMonitorOptions = {}): Promise<GoogleSearchMonitorResponse> {
     return requestGoogleSearchMonitor(this, request, options);
   }

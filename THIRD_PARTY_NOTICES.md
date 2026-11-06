@@ -1,6 +1,6 @@
 # Third-party components
 
-The TypeScript SDK, local HTTP adapter and native bridge source in this repository are MIT licensed. Cloro's public documentation and SDK were inspected for interface organization; Cloro source code and backend are not included or called.
+The TypeScript SDK, local HTTP adapter and native bridge source in this repository are MIT licensed.
 
 The npm dependency Acorn is MIT licensed and supplies its own license. The optional Python dependency curl_cffi is MIT licensed and includes separately licensed native dependencies in its own wheel distribution. It is installed into a local environment during explicit setup, not bundled into this npm artifact.
 
