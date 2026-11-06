@@ -10,13 +10,19 @@ const entities: Record<string, string> = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
   hellip: '…', ndash: '–', mdash: '—', rsquo: '’', lsquo: '‘',
   rdquo: '”', ldquo: '“', bull: '•', middot: '·', copy: '©', reg: '®',
+  AMP: '&', LT: '<', GT: '>', QUOT: '"',
+  le: '≤', ge: '≥', ne: '≠', times: '×', divide: '÷', plusmn: '±', minus: '−',
+  rarr: '→', larr: '←', harr: '↔', frac12: '½', frac14: '¼', frac34: '¾',
+  radic: '√', infin: '∞', sum: '∑', prod: '∏', pi: 'π', alpha: 'α', beta: 'β',
+  gamma: 'γ', theta: 'θ', lambda: 'λ', mu: 'μ', sigma: 'σ', phi: 'φ', omega: 'ω',
+  Delta: 'Δ', delta: 'δ', asymp: '≈', equiv: '≡', notin: '∉', deg: '°', sup2: '²', sup3: '³',
 };
 
 const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 const ignoredTags = new Set(['script', 'style', 'template', 'noscript']);
 
 export function decodeEntities(value: string): string {
-  return value.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
+  return value.replace(/&(#x[\da-f]+|#\d+|[a-z][a-z\d]*);/gi, (match, entity: string) => {
     if (!entity.startsWith('#')) return entities[entity] ?? match;
     const code = entity[1]?.toLowerCase() === 'x' ? Number.parseInt(entity.slice(2), 16) : Number(entity.slice(1));
     return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : '�';
@@ -103,7 +109,8 @@ export function visibleText(node: HtmlNode): string {
     const value = stack.pop()!;
     if (typeof value === 'string') { text.push(value); continue; }
     if (ignoredTags.has(value.tag) || value.attrs.hidden !== undefined || value.attrs['aria-hidden'] === 'true' || /display\s*:\s*none|visibility\s*:\s*hidden/i.test(value.attrs.style ?? '')) continue;
-    if (/^(?:br|div|p|li|section|h[1-6])$/.test(value.tag)) text.push(' ');
+    if (value.tag === 'img' && value.attrs.alt) text.push(' ', value.attrs.alt, ' ');
+    if (/^(?:br|div|p|li|section|h[1-6]|pre|table|thead|tbody|tfoot|tr|th|td|caption|figure|figcaption|blockquote|article|dl|dt|dd|details|summary)$/.test(value.tag)) { text.push(' '); stack.push(' '); }
     for (let i = value.children.length - 1; i >= 0; i--) stack.push(value.children[i]!);
   }
   return decodeEntities(text.join('')).replace(/\s+/g, ' ').trim();

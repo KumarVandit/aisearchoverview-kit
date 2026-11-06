@@ -1,3 +1,5 @@
+import { overviewProductLinks, productViewerNotice, productViewerUrl, productViewerTitle } from './related-links.js';
+import { overviewVideos, sourceDescription } from './assets.js';
 import { GoogleSearchError } from './errors.js';
 import { ancestor, descendants, parseHtml, visibleText, type HtmlNode } from './html.js';
 import { overviewMarkdown } from './markdown.js';
@@ -7,7 +9,7 @@ import type {
   GoogleSearchResponse, GoogleSearchStatus, ParseGoogleSearchOptions, GoogleAiOverviewCitationPill,
 } from './types.js';
 
-const EXPERIMENTAL = 'Organic and related-question extraction has structural unit coverage but no successful live Search capture from the research environment.';
+const EXPERIMENTAL = 'Organic and related-question extraction covers recognized structures only; the surrounding SERP feature set is incomplete.';
 
 function externalUrl(value: string | undefined, sourceUrl: string, opaqueRedirect = false): string | undefined {
   if (!value) return undefined;
@@ -123,18 +125,20 @@ function overviewScope(nodes: HtmlNode[]): OverviewScope | undefined {
 const OVERVIEW_PLACEHOLDER = /^(?:(?:(?:loading|generating|thinking|searching)(?:\s+(?:(?:an?\s+)?(?:ai\s+)?(?:overview|response|answer|results|summary)|for information|the web))?|please\s+wait|just\s+a\s+moment|\d+(?:\.\d+)?%)(?:[\s.…!,:;-]+|$))+$/i;
 const OVERVIEW_NOTICE = /^(?:(?:AI (?:responses|Overviews?) (?:may include|can make) mistakes|AI can make mistakes|Generative AI is experimental|(?:An? )?AI Overview is not available for this search|Can't generate an AI overview right now|Error translating content)(?:[.!…:\s]*(?:Learn more|Please try again later|Try again later))*[.!…\s]*|AI Overview)$/i;
 
-function overviewContent(scope: OverviewScope, sourceUrl?: string): HtmlNode {
+function overviewContent(scope: OverviewScope, sourceUrl?: string, includeCitations = true): HtmlNode {
   const content: HtmlNode = { tag: 'div', attrs: {}, children: [] };
   const stack = [{ source: scope.content, target: content }];
   while (stack.length > 0) {
     const { source, target } = stack.pop()!;
     for (const child of source.children) {
       if (typeof child === 'string') { target.children.push(child); continue; }
-      if (insideAd(child) || child.attrs['data-ignore-copy'] !== undefined) continue;
+      if (insideAd(child) || child.attrs['data-ignore-copy'] !== undefined || (sourceUrl && productViewerNotice(child, sourceUrl))) continue;
+      const productUrl = sourceUrl ? productViewerUrl(child, sourceUrl) : undefined;
+      if (productUrl && sourceUrl) { target.children.push({tag:'a',attrs:{href:productUrl.toString()},children:[productViewerTitle(child, sourceUrl)]}); continue; }
       if (scope.simplified && (hasClass(child, 'RFbPWe') || hasClass(child, 'CGJcbf') || child.attrs.id === 'NwHcK')) continue;
       if (child.attrs['data-suuid'] !== undefined) {
         const seen = new Set<string>();
-        if (sourceUrl) for (const link of descendants(child).filter(node => node.tag === 'a')) {
+        if (sourceUrl && includeCitations) for (const link of descendants(child).filter(node => node.tag === 'a')) {
           const url = externalUrl(link.attrs.href, sourceUrl);
           const title = link.attrs['aria-label']?.trim() || visibleText(link);
           if (url && title && !seen.has(url)) { target.children.push(' ', { tag: 'a', attrs: { href: url }, children: [title] }); seen.add(url); }
@@ -163,7 +167,7 @@ function overviewCitations(scope: OverviewScope, sourceUrl: string, sources: Goo
       const index = sources.findIndex(source => source.url === url);
       if (index < 0 || !url || seen.has(index)) continue;
       seen.add(index);
-      pills.push({ citationPillId: id, position: index + 1, label: link.attrs['aria-label']?.trim() || sources[index]!.title, url, domain: new URL(url).hostname });
+      pills.push({ ...(sources[index]!.description ? { description:sources[index]!.description } : {}), citationPillId: id, position: index + 1, label: link.attrs['aria-label']?.trim() || sources[index]!.title, url, domain: new URL(url).hostname });
     }
   }
   return pills;
@@ -189,7 +193,9 @@ function overviewLinks(scope: OverviewScope, sourceUrl: string): GoogleSearchLin
     const title = (titleNode ? visibleText(titleNode) : node.attrs['aria-label']?.trim() || visibleText(node)).trim();
     if (!url || !title || seen.has(url) || insideAd(node)) return [];
     seen.add(url);
-    return [{ title, url }];
+    const card = ancestor(node, parent => parent.attrs['data-src-id'] !== undefined, scope.container);
+    const description = card ? sourceDescription(card, title) : undefined;
+    return [{ title, url, ...(description ? {description} : {}) }];
   });
 }
 
@@ -203,7 +209,7 @@ function overview(nodes: HtmlNode[], source: URL, blocked: boolean): GoogleAiOve
     status: 'unverified', sources: [],
     reason: 'No supported AI Overview structure was recognized; absence, deferred loading, and unsupported markup cannot be distinguished.',
   };
-  const text = visibleText(overviewContent(scope)).trim();
+  const text = visibleText(overviewContent(scope, source.toString(), false)).trim();
   const busy = scope.container.attrs['aria-busy'] === 'true' || scope.content.attrs['aria-busy'] === 'true' || descendants(scope.content).some(node => node.attrs['aria-busy'] === 'true');
   if (busy || !/[\p{L}\p{N}]/u.test(text) || OVERVIEW_PLACEHOLDER.test(text) || OVERVIEW_NOTICE.test(text)) return {
     status: 'unverified', sources: [],
@@ -211,10 +217,14 @@ function overview(nodes: HtmlNode[], source: URL, blocked: boolean): GoogleAiOve
   };
   const sources = overviewLinks(scope, source.toString());
   const citationPills = overviewCitations(scope, source.toString(), sources);
+  const productLinks = scope.observed && !scope.simplified ? overviewProductLinks(scope.content, source.toString()) : [];
+  const videos = scope.observed && !scope.simplified ? overviewVideos(scope.content, source.toString()) : [];
   return {
     status: 'present', text, sources,
     markdown: overviewMarkdown(overviewContent(scope, source.toString()), source.toString()),
     ...(citationPills.length ? { citationPills } : {}),
+    ...(videos.length ? {videos} : {}),
+    ...(productLinks.length ? {productLinks} : {}),
     reason: scope.simplified
       ? 'Answer text and cited links were extracted from simplified Search HTML and literal inline HTML transfers without executing scripts; generation and expansion completeness are not established by the snapshot.'
       : scope.observed

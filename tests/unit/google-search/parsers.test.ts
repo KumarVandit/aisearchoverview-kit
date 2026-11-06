@@ -70,7 +70,7 @@ describe('Google Search experimental structural extraction', () => {
     ]);
     expect(response.relatedQuestions).toEqual(['What is TypeScript?', 'Is TypeScript JavaScript?']);
     expect(response.relatedSearches).toEqual([{ query: 'typescript tutorial', url: 'https://www.google.com/search?q=typescript+tutorial&hl=en' }]);
-    expect(response.warnings.some(item => item.includes('no successful live Search capture'))).toBe(true);
+    expect(response.warnings.some(item => item.includes('surrounding SERP feature set is incomplete'))).toBe(true);
   });
 
   it('extracts the synthetic explicitly labeled overview without generating or substituting text', () => {
@@ -221,13 +221,13 @@ describe('Google AI Overview captured rendered markup', () => {
     expect(result.text).toContain('Cooler Temperatures:');
     expect(result.text).not.toContain('Smithsonian');
     expect(result.sources).toHaveLength(11);
-    expect(result.sources[0]).toEqual({ title: 'Why Do Leaves Change Color in the Fall? | Smithsonian Institution', url: 'https://www.si.edu/stories/why-do-leaves-change-color-fall' });
+    expect(result.sources[0]).toMatchObject({ title: 'Why Do Leaves Change Color in the Fall? | Smithsonian Institution', url: 'https://www.si.edu/stories/why-do-leaves-change-color-fall' });
     expect(new Set(result.sources.map(source => source.url)).size).toBe(11);
   });
 
   it('uses empty-anchor ARIA titles, keeps meaningful video parameters and prefers source-card titles', () => {
     const result = parseGoogleAiOverviewHtml(fixture('aio-sky-expanded.html'), SKY);
-    expect(result.sources[0]).toEqual({ title: 'Why Is the Sky Blue? | NASA Space Place – NASA Science for Kids', url: 'https://spaceplace.nasa.gov/blue-sky/' });
+    expect(result.sources[0]).toMatchObject({ title: 'Why Is the Sky Blue? | NASA Space Place – NASA Science for Kids', url: 'https://spaceplace.nasa.gov/blue-sky/' });
     expect(result.sources).toContainEqual({ title: 'Why Is the Sky Blue? - Learning Junction - Video for Kids, video, watch on YouTube', url: 'https://www.youtube.com/watch?v=p4YxN9rwu8U&t=7' });
     const minimal = observed('A supported answer.<span data-suuid="group-1"><a href="https://example.com/source" aria-label="Inline publisher"></a><button data-amic="true">Inline publisher +1</button></span>', '<div data-src-id="1"><a data-link-behavior="cobrowse" href="https://example.com/source" aria-label="Full source title"></a></div>');
     expect(parseGoogleAiOverviewHtml(minimal)).toMatchObject({ status: 'present', text: 'A supported answer.', sources: [{ title: 'Full source title', url: 'https://example.com/source' }] });
@@ -309,7 +309,7 @@ describe('Google AI Overview captured initial HTTP markup', () => {
     expect(response.aiOverview.text).toContain("The sky is blue because Earth's atmosphere scatters sunlight in all directions");
     expect(response.aiOverview.text).toContain('Rayleigh Scattering:');
     expect(response.aiOverview.text).not.toMatch(/AI Overview|Related results|NASA Space Place|Streaming Service|Show more/);
-    expect(response.aiOverview.sources).toEqual([
+    expect(response.aiOverview.sources.map(({description: _description,...source})=>source)).toEqual([
       { title: 'Why Is the Sky Blue? | NASA Space Place – NASA Science for Kids', url: 'https://www.google.com/goto?url=redacted-destination-1' },
       { title: 'Why Is the Sky Blue? | NESDIS | National Environmental Satellite, Data, and Information Service', url: 'https://www.google.com/goto?url=redacted-destination-2' },
       { title: 'NASA+ · NASA+ Streaming Service', url: 'https://www.google.com/goto?url=redacted-destination-3' },

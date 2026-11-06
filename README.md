@@ -98,3 +98,5 @@ Default tests are offline. `npm run test:live` opts into network probes; an acce
 
 
 MIT for this SDK and adapter. The fetched engine, HTTP client and Rust dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md). No Google affiliation is implied.
+
+

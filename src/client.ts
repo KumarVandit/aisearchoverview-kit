@@ -1,15 +1,20 @@
+import { coordinatedSearchFetch } from './transport/coordinator.js';
 import { existsSync } from 'node:fs';
 import { GoogleSearchClient } from './google-search/client.js';
 import { embeddedSearchFetch } from './transport/embedded.js';
 import { runtimePaths } from './runtime.js';
 import { AiSearchError } from './errors.js';
 import { OverviewNamespace } from './namespaces/overview.js';
+import { SearchNamespace } from './namespaces/search.js';
+import { AiModeNamespace } from './namespaces/ai-mode.js';
 import { SourcesNamespace } from './namespaces/sources.js';
 import type { KitConfig } from './types.js';
 
 export class AiSearchOverviewClient {
   readonly overview: OverviewNamespace;
+  readonly search: SearchNamespace;
   readonly sources: SourcesNamespace;
+  readonly aiMode: AiModeNamespace;
 
   constructor(config: KitConfig = {}) {
     if (config.transport !== undefined && !['embedded', 'http'].includes(config.transport)) throw new AiSearchError('transport must be embedded or http', 'configuration');
@@ -28,8 +33,12 @@ export class AiSearchOverviewClient {
       };
       fetcher = embedded;
     }
+    fetcher = coordinatedSearchFetch(fetcher, config.traffic);
     const normalized = { ...config, transport };
-    this.overview = new OverviewNamespace(new GoogleSearchClient({ fetch: fetcher, timeoutMs }), normalized, beforeGet);
+    const searchClient = new GoogleSearchClient({ fetch: fetcher, timeoutMs });
+    this.overview = new OverviewNamespace(searchClient, normalized, beforeGet);
+    this.search = new SearchNamespace(searchClient, normalized, beforeGet);
+    this.aiMode = new AiModeNamespace(fetcher, normalized, beforeGet);
     this.sources = new SourcesNamespace(config.fetch ?? globalThis.fetch, timeoutMs);
   }
 }
