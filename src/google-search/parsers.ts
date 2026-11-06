@@ -16,6 +16,7 @@ function externalUrl(value: string | undefined, sourceUrl: string, opaqueRedirec
   let url: URL;
   try { url = new URL(value, sourceUrl); } catch { return undefined; }
   if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return undefined;
+  if (url.hostname==='googleadservices.com'||url.hostname.endsWith('.googleadservices.com')||(['www.google.com','google.com'].includes(url.hostname)&&/^\/(?:aclk|pagead)(?:\/|$)/.test(url.pathname))) return undefined;
   if (url.hostname === 'www.google.com' || url.hostname === 'google.com') {
     if (url.pathname === '/url') {
       const target = url.searchParams.get('q') ?? url.searchParams.get('url');
@@ -30,7 +31,7 @@ function externalUrl(value: string | undefined, sourceUrl: string, opaqueRedirec
 
 function label(node: HtmlNode, nodes: HtmlNode[]): string {
   const direct = node.attrs['aria-label'];
-  if (direct) return direct.trim();
+  if (direct) return visibleText(parseHtml(direct));
   const ids = node.attrs['aria-labelledby']?.split(/\s+/);
   return ids ? ids.map(id => nodes.find(item => item.attrs.id === id)).filter((item): item is HtmlNode => !!item).map(visibleText).join(' ') : '';
 }
@@ -139,7 +140,7 @@ function overviewContent(scope: OverviewScope, sourceUrl?: string, includeCitati
       if (child.attrs['data-suuid'] !== undefined) {
         const seen = new Set<string>();
         if (sourceUrl && includeCitations) for (const link of descendants(child).filter(node => node.tag === 'a')) {
-          const url = externalUrl(link.attrs.href, sourceUrl);
+          const url = externalUrl(link.attrs.href, sourceUrl, true);
           const title = link.attrs['aria-label']?.trim() || visibleText(link);
           if (url && title && !seen.has(url)) { target.children.push(' ', { tag: 'a', attrs: { href: url }, children: [title] }); seen.add(url); }
         }
@@ -163,7 +164,7 @@ function overviewCitations(scope: OverviewScope, sourceUrl: string, sources: Goo
     id++;
     const seen = new Set<number>();
     for (const link of descendants(widget).filter(node => node.tag === 'a')) {
-      const url = externalUrl(link.attrs.href, sourceUrl);
+      const url = externalUrl(link.attrs.href, sourceUrl, true);
       const index = sources.findIndex(source => source.url === url);
       if (index < 0 || !url || seen.has(index)) continue;
       seen.add(index);
@@ -262,14 +263,14 @@ function organicResults(root: HtmlNode, nodes: HtmlNode[], sourceUrl: string): G
   const seen = new Set<string>();
   for (const heading of descendants(root).filter(node => node.tag === 'h3')) {
     const link = ancestor(heading, node => node.tag === 'a', root);
-    if (!link || ancestor(link, node => isAd(node) || node.attrs.id === 'm-x-content' || overviewWrapper(node) || overviewDocumentRoot(node) || simplifiedOverviewRoot(node) || /^(?:AI Overview|People also ask)$/i.test(label(node, nodes)), root)) continue;
-    const url = externalUrl(link.attrs.href, sourceUrl);
+    if (!link || ancestor(link, node => isAd(node) || node.attrs.id === 'm-x-content' || overviewWrapper(node) || overviewDocumentRoot(node) || simplifiedOverviewRoot(node) || /^(?:AI Overview|People also ask|Related searches)$/i.test(label(node, nodes)), root)) continue;
+    const url = externalUrl(link.attrs.href, sourceUrl, true);
     const title = visibleText(heading);
     if (!url || !title || seen.has(url)) continue;
-    const container = ancestor(link, node => node.attrs['data-sokoban-container'] !== undefined || node.attrs['data-hveid'] !== undefined || /(?:^|\s)(?:MjjYud|g)(?:\s|$)/.test(node.attrs.class ?? ''), root) ?? link.parent;
+    const container = ancestor(link, node => (hasClass(node,'Gx5Zad') && hasClass(node,'xpd')) || node.attrs['data-sokoban-container'] !== undefined || node.attrs['data-hveid'] !== undefined || /(?:^|\s)(?:MjjYud|g)(?:\s|$)/.test(node.attrs.class ?? ''), root) ?? link.parent;
     const children = container ? descendants(container) : [];
-    const snippet = children.find(node => node.attrs['data-sncf'] !== undefined || /(?:^|\s)(?:VwiC3b|aCOpRe)(?:\s|$)/.test(node.attrs.class ?? ''));
-    const cite = children.find(node => node.tag === 'cite');
+    const snippet = children.find(node => hasClass(node,'H66NU') || node.attrs['data-sncf'] !== undefined || /(?:^|\s)(?:VwiC3b|aCOpRe)(?:\s|$)/.test(node.attrs.class ?? ''));
+    const cite = children.find(node => node.tag === 'cite' || hasClass(node,'BamJPe'));
     results.push({
       position: results.length + 1, title, url,
       ...(snippet && visibleText(snippet) ? { snippet: visibleText(snippet) } : {}),
@@ -286,7 +287,7 @@ export function parseGoogleSearchHtml(html: string, options: ParseGoogleSearchOp
   const text = visibleText(tree);
   const httpStatus = options.httpStatus ?? 200;
   const google = googleSource(source);
-  const root = google && source.pathname === '/search' ? nodes.find(node => node.attrs.id === 'rso') ?? nodes.find(node => node.attrs.id === 'search') : undefined;
+  const root = google && source.pathname === '/search' ? nodes.find(node => node.attrs.id === 'rso') ?? nodes.find(node => node.attrs.id === 'search') ?? nodes.find(node => node.attrs.id === 'main' && descendants(node).some(child => hasClass(child,'Gx5Zad') && descendants(child).some(heading=>heading.tag==='h3'))) : undefined;
   const candidates = root ? organicResults(root, nodes, source.toString()) : [];
   const renderedOverview = overview(google ? nodes : [], source, false);
   let status: GoogleSearchStatus = 'unrecognized';

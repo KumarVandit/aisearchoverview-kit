@@ -40,6 +40,7 @@ CommonJS is supported with `const { sdk } = require('aisearchoverview-kit')`.
 | `overview.parse(html, options)` | Extract text and sources from saved HTML, without requests or script execution. |
 | `overview.batch(queries, options?)` | Collect several queries with bounded concurrency and individual error results. |
 | `sources.resolve(sources, options?)` | Resolve Google's citation redirects without fetching publisher pages. |
+| `search.get(query, { resolveSources: true })` | Retrieve the Overview and supported organic results with publisher URLs. [Combined response](docs/search.md). |
 | `setupRuntime(options?)` | Prepare the optional local HTTP/runtime dependencies. |
 
 ```ts

@@ -43,6 +43,8 @@ export interface GoogleAiOverviewBrowserResponse extends GoogleAiOverview {
 }
 
 export interface GoogleSearchOptions {
+  location?: string;
+  device?: 'desktop';
   signal?: AbortSignal;
   language?: string;
   country?: string;
@@ -113,6 +115,8 @@ export interface GoogleAiOverviewCitationPill {
 }
 
 export interface GoogleSearchMonitorRequest {
+  location?: string;
+  device?: 'desktop';
   query: string;
   country?: string;
   gl?: string;
@@ -155,6 +159,9 @@ export interface GoogleSearchMonitorResult {
 }
 
 export interface GoogleSearchMonitorMetadata {
+  location?: string;
+  device?: 'desktop';
+  resolution?: { attempted: number; resolved: number; unresolved: number; durationMs: number };
   transport: 'http' | 'browser' | 'snapshot';
   query?: string;
   sourceUrl?: string;

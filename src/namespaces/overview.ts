@@ -5,7 +5,7 @@ import { AiSearchError, type AiSearchErrorKind } from '../errors.js';
 import type { KitConfig, OverviewOptions, OverviewResult, ParseOverviewOptions, OverviewBatchOptions, OverviewBatchItem } from '../types.js';
 
 function request(query: string, options: OverviewOptions, config: KitConfig) {
-  return { query, country: options.country ?? config.locale?.country ?? 'US', hl: options.language ?? config.locale?.language ?? 'en', include: { aioverview: { markdown: options.markdown ?? true } } };
+  return { query, location:options.location, device:options.device, country: options.country ?? config.locale?.country ?? 'US', hl: options.language ?? config.locale?.language ?? 'en', include: { aioverview: { markdown: options.markdown ?? true } } };
 }
 
 export function overviewResult(report: GoogleSearchMonitorResponse, query: string, options: OverviewOptions, config: KitConfig, snapshot = false): OverviewResult {
@@ -19,7 +19,7 @@ export function overviewResult(report: GoogleSearchMonitorResponse, query: strin
     sources: (data?.sources ?? []).map(source => ({ position: source.position, title: source.label, url: source.url, ...(source.description ? { description: source.description } : {}), ...(source.redirectLink ? { redirectUrl: source.redirectLink } : {}) })),
     reason: report.metadata.aiOverview.reason ?? (!report.success ? report.error.message : 'Overview presence was not established.'),
     metadata: {
-      country: options.country ?? config.locale?.country ?? 'US', language: options.language ?? config.locale?.language ?? 'en',
+      ...(options.location!==undefined?{location:options.location}:{}),...(options.device?{device:options.device}:{}),country: options.country ?? config.locale?.country ?? 'US', language: options.language ?? config.locale?.language ?? 'en',
       transport: snapshot ? 'snapshot' as const : config.transport ?? 'embedded', durationMs: report.metadata.timing?.totalMs ?? 0,
       httpStatus: report.metadata.httpStatus, sourceUrl: report.metadata.sourceUrl, completeness: 'unverified' as const,
       warnings: report.metadata.warnings,
