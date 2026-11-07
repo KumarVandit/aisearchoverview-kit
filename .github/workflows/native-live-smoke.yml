@@ -1,6 +1,12 @@
 name: Native Linux live smoke
 on:
   workflow_dispatch:
+    inputs:
+      session:
+        description: Anonymous session mode
+        type: choice
+        options: [fresh, reuse]
+        default: fresh
 permissions:
   contents: read
 concurrency:
@@ -13,6 +19,7 @@ jobs:
     env:
       CARGO_BUILD_JOBS: '2'
       AI_SEARCH_OVERVIEW_CACHE: /tmp/overview-runtime
+      AI_SEARCH_LIVE_SESSION: ${{ inputs.session }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

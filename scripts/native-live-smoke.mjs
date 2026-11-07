@@ -13,7 +13,9 @@ const queries = [
   'apartments in austin texas cheap',
 ];
 const profile = {country:'US',language:'en',location:'Austin,Texas,United States',device:'desktop'};
-const client = sdk({ipFamily:'ipv4',traffic:{maxConcurrent:1,minIntervalMs:15000,cooldownMs:60000}});
+const session = process.env.AI_SEARCH_LIVE_SESSION ?? 'fresh';
+if (!['fresh','reuse'].includes(session)) throw new Error('AI_SEARCH_LIVE_SESSION must be fresh or reuse');
+const client = sdk({session,ipFamily:'ipv4',traffic:{maxConcurrent:1,minIntervalMs:15000,cooldownMs:60000}});
 const summary = text => { if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,text); };
 const cell = value => String(value ?? '').replace(/[&<>|`\r\n]/g,character => ({'&':'&amp;','<':'&lt;','>':'&gt;','|':'&#124;','`':'&#96;','\r':' ','\n':' '})[character]);
 const shortText = (value,max=100) => String(value ?? '').replace(/[\u0000-\u001f\u007f]/g,' ').slice(0,max);
@@ -25,8 +27,8 @@ function sourceLocation(value) {
   try { const url = new URL(value); return {origin:url.origin,path:url.pathname}; }
   catch { return undefined; }
 }
-summary('## Native Linux live smoke\n\nSeven exact queries; US/en/Austin desktop; fresh native session per query; IPv4; no answer cache or publisher URL resolution. One attempt each, with 15-second spacing and at least 62 seconds after an access denial. No raw HTML, cookies, session URLs, or artifacts are retained.\n\n| Query | Overview | HTTP | Time (ms) | Text characters | Citations | Organic | Verified text + citations |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n');
-let pause = 0, verified = 0;
+summary(`## Native Linux live smoke\n\nSeven exact queries; US/en/Austin desktop; session mode **${session}**; IPv4; no answer cache or publisher URL resolution. One attempt each, with 15-second spacing. Stop at the first access denial, redirect or error. No raw HTML, cookies, session URLs, or artifacts are retained.\n\n| Query | Overview | HTTP | Time (ms) | Text characters | Citations | Organic | Verified text + citations |\n| --- | --- | --- | --- | --- | --- | --- | --- |\n`);
+let pause = 0, verified = 0, attempted = 0;
 for (const [index,query] of queries.entries()) {
   if (pause) await new Promise(resolve => setTimeout(resolve,pause));
   const started = performance.now(), startedAt = new Date().toISOString();
@@ -48,8 +50,10 @@ for (const [index,query] of queries.entries()) {
     pause = 62000;
   }
   console.log(JSON.stringify(row));
+  attempted++;
   summary(`| ${cell(query)} | ${cell(row.overviewStatus)} | ${cell(row.httpStatus)} | ${row.elapsedMs} | ${row.textLength??0} | ${row.citations??0} | ${row.organicCount??0} | ${row.verifiedAnswer?'yes':'no'} |\n`);
+  if (row.overviewStatus==='error' || row.overviewStatus==='blocked' || row.httpStatus!==200) break;
 }
 summary(`\nVerified actual nonempty Overview text with citation URLs: **${verified}/${queries.length}**. Google can withhold an Overview or deny access; these outcomes remain explicit. This check is not an availability or latency guarantee.\n`);
-console.log(JSON.stringify({type:'summary',verified,queries:queries.length,allVerified:verified===queries.length}));
+console.log(JSON.stringify({type:'summary',session,verified,attempted,queries:queries.length,allVerified:verified===queries.length}));
 if (verified!==queries.length) process.exitCode=1;
