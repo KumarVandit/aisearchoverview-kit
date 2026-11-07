@@ -4,6 +4,8 @@
 
 - Add opt-in `session: 'reuse'` for long-lived embedded clients, retaining only their own anonymous cookies in process memory through private subprocess input/output.
 - Honor bootstrap cookie expiry and deletion; serialize reused-session requests and retain state across access denials without automatic retry or identity reset.
+- Preserve the HTTP client's actual HttpOnly flags so protected cookies stay out of the embedded script.
+- Parse the observed labelled Overview turn layout, including source cards and local property names, while excluding UI controls and source cards from organic results.
 - Keep hosted access, deferred Overview generation and per-query response times explicitly unverified.
 
 ## 0.4.0 — 2026-11-07

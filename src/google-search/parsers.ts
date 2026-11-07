@@ -58,6 +58,7 @@ interface OverviewScope {
   rhs?: HtmlNode;
   observed: boolean;
   simplified?: boolean;
+  turn?: boolean;
 }
 
 function hasClass(node: HtmlNode, name: string): boolean {
@@ -104,6 +105,17 @@ function overviewDocumentRoot(node: HtmlNode): boolean {
 }
 
 function overviewScope(nodes: HtmlNode[]): OverviewScope | undefined {
+  // Rendered Search also uses turn/aimc without the older Overview controllers.
+  // The explicit Overview heading is required: AI Mode uses the same content markers.
+  for (const container of nodes.filter(node => node.attrs['data-scope-id'] === 'turn' && !insideAd(node))) {
+    const children = descendants(container).filter(node => !ancestor(node, parent => parent.attrs['data-scope-id'] === 'turn', container));
+    const answer = children.filter(node => node.attrs['data-subtree'] === 'aimc' && !insideAd(node));
+    const heading = children.find(node => overviewHeading(node) && !ancestor(node, parent => parent.attrs['data-subtree'] === 'aimc', container));
+    if (!heading || answer.length !== 1) continue;
+    const columns = descendants(answer[0]!).filter(node => !insideAd(node) && !ancestor(node, parent => parent.attrs['data-scope-id'] === 'turn', container));
+    const main = columns.filter(node => node.attrs['data-container-id'] === 'main-col');
+    if (main.length === 1) return { container, content: main[0]!, rhs: columns.find(node => node.attrs['data-container-id'] === 'rhs-col'), observed: true, turn: true };
+  }
   // Ozu assigns m-x-content during client truncation setup; the observed wrapper also identifies markup before that mutation.
   const containers = [...nodes.filter(overviewWrapper), ...nodes.filter(overviewDocumentRoot), ...nodes.filter(node => node.attrs.id === 'm-x-content')];
   for (const container of containers.filter(node => !insideAd(node))) {
@@ -146,6 +158,11 @@ function overviewContent(scope: OverviewScope, sourceUrl?: string, includeCitati
         }
         continue;
       }
+      // Local-place references in the observed turn are clickable prose, not UI controls.
+      if (scope.turn && child.tag === 'span' && child.attrs.role === 'button' && child.attrs.jscontroller === 'MnjSLd#lGxCFd' && child.parent?.tag === 'u' && ancestor(child, node => node.tag === 'li', scope.content)) {
+        target.children.push(visibleText(child));
+        continue;
+      }
       if (/^(?:button|cite|nav|svg|input|aside|footer)$/.test(child.tag) || /^(?:button|status|progressbar|navigation)$/.test(child.attrs.role ?? '')) continue;
       if (overviewHeading(child) || /^AI Mode replied:$/i.test(visibleText(child).trim()) || OVERVIEW_NOTICE.test(visibleText(child))) continue;
       if (!scope.observed && child.tag === 'a' && !ancestor(child, node => node.tag === 'p' || node.tag === 'li', scope.content)) continue;
@@ -179,6 +196,14 @@ function overviewLinks(scope: OverviewScope, sourceUrl: string): GoogleSearchLin
   if (scope.simplified) {
     if (scope.rhs) links.push(...descendants(scope.rhs).filter(node => node.tag === 'a' && hasClass(node, 'CGJcbf') && hasClass(node, 'GzaHMe')));
   } else if (scope.observed) {
+    if (scope.turn) {
+      // This rendered layout places source cards inside main-col's ignored-copy rail.
+      for (const column of [scope.content, ...(scope.rhs ? [scope.rhs] : [])]) {
+        for (const card of descendants(column).filter(node => node.attrs['data-src-id'] !== undefined && !insideAd(node))) {
+          links.push(...descendants(card).filter(node => node.tag === 'a' && node.attrs['aria-label'] !== undefined));
+        }
+      }
+    }
     if (scope.rhs) {
       for (const card of descendants(scope.rhs).filter(node => node.attrs['data-src-id'] !== undefined && !insideAd(node))) {
         links.push(...descendants(card).filter(node => node.tag === 'a' && node.attrs['data-link-behavior'] === 'cobrowse'));
@@ -263,7 +288,7 @@ function organicResults(root: HtmlNode, nodes: HtmlNode[], sourceUrl: string): G
   const seen = new Set<string>();
   for (const heading of descendants(root).filter(node => node.tag === 'h3')) {
     const link = ancestor(heading, node => node.tag === 'a', root);
-    if (!link || ancestor(link, node => isAd(node) || node.attrs.id === 'm-x-content' || overviewWrapper(node) || overviewDocumentRoot(node) || simplifiedOverviewRoot(node) || /^(?:AI Overview|People also ask|Related searches)$/i.test(label(node, nodes)), root)) continue;
+    if (!link || ancestor(link, node => isAd(node) || node.attrs.id === 'm-x-content' || overviewWrapper(node) || overviewDocumentRoot(node) || node.attrs['data-scope-id'] === 'turn' && descendants(node).some(overviewHeading) || simplifiedOverviewRoot(node) || /^(?:AI Overview|People also ask|Related searches)$/i.test(label(node, nodes)), root)) continue;
     const url = externalUrl(link.attrs.href, sourceUrl, true);
     const title = visibleText(heading);
     if (!url || !title || seen.has(url)) continue;

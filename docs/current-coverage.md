@@ -3,6 +3,7 @@
 | Feature | Support | Limits |
 | --- | --- | --- |
 | `overview.get/parse/batch` | Answer text, Markdown, sources, citation groups and source descriptions | Availability varies; completeness remains unverified |
+| Rendered Overview layouts | Recognized labelled layouts, source cards and local property names within answer text | Hidden answer text and citation buttons without destinations are not reconstructed; parsing rendered HTML does not implement deferred retrieval |
 | Overview videos | Recognized YouTube cards, titles, links, channels and timing | Other video layouts may be omitted |
 | Overview product references | Google product-viewer links | Merchant offers and prices are not provided |
 | `search.get/parse` | Organic results, People Also Ask questions, related searches and Overview | Full Search page coverage is not supported |
