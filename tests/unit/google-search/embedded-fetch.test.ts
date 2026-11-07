@@ -59,6 +59,14 @@ describe('embedded Search fetch bridge', () => {
     expect(response.status).toBe('unverified');expect(response.reason).toContain('regional Search');
     expect(response.metadata.httpStatus).toBe(302);expect(execute).toHaveBeenCalledTimes(1);
   });
+  it.each([['initial-search','before bootstrap execution'],['bootstrap-follow-up','after bootstrap execution']])('identifies the actual %s denial phase without disclosing process state',async(stage,reason)=>{
+    output({status:302,body:'',url,headers:{},access:{kind:'blocked',status:302,stage}});
+    const result=await sdk({fetch:embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'})}).overview.get('example');
+    expect(result.status).toBe('blocked');
+    expect(result.reason).toContain(reason);
+    expect(result.metadata.httpStatus).toBe(302);
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
   it.each([['RUNTIME_TIMEOUT','timeout'],['BOOTSTRAP_FAILED','parse'],['BOOTSTRAP_INCOMPLETE','parse'],['NETWORK_ERROR','network']])('preserves the safe runtime failure %s through the SDK',async(code,kind)=>{
     output({error:{code,message:'private-cookie-do-not-expose'}},new Error('raw process details do-not-expose'));
     await expect(sdk({fetch:embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'})}).overview.get('example')).rejects.toMatchObject({kind});
@@ -97,5 +105,65 @@ describe('embedded Search fetch bridge', () => {
     output({status:200,body:42,url,headers:{}});await expect(fetcher(url)).rejects.toThrow('Invalid embedded Search response');
     output({status:200,body:'',url:'https://example.com/',headers:{}});await expect(fetcher(url)).rejects.toThrow('Unexpected embedded Search response URL');
     output({},new Error('process failure'));await expect(fetcher(url)).rejects.toThrow('Embedded Search process failed');
+  });
+  it('retains private session IPC between serialized calls and preserves it through a denial', async () => {
+    const sent: unknown[] = [];
+    const pending: (() => void)[] = [];
+    execute.mockImplementation((...args: unknown[]) => {
+      const index = sent.length;
+      const done = args[3] as (error: Error | null, stdout: string, stderr: string) => void;
+      const stdin = {on: vi.fn(), end: (input:string) => {
+        sent.push(JSON.parse(input));
+        pending.push(() => done(null, JSON.stringify({status:index === 1 ? 302 : 200, body:'<html>ordinary</html>', url, headers:{},
+          ...(index === 1 ? {access:{kind:'blocked',status:302}} : {}), sessionCookies:[{name:'SG_SS',value:'private-own-session',domain:'www.google.com',domainSpecified:false,path:'/',secure:true,expires:null,httpOnly:false}]}), ''));
+      }};
+      return {stdin} as unknown as ChildProcess;
+    });
+    const fetcher = embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap',session:'reuse'});
+    const first = fetcher(url);
+    const second = fetcher(url);
+    expect(execute).toHaveBeenCalledTimes(1);
+    pending.shift()!();
+    const response = await first;
+    expect(await response.text()).not.toContain('private-own-session');
+    await vi.waitFor(() => expect(execute).toHaveBeenCalledTimes(2));
+    expect(sent[0]).toEqual([]);
+    expect(sent[1]).toEqual([expect.objectContaining({value:'private-own-session'})]);
+    expect(execute.mock.calls[0]?.[1]).toEqual([expect.stringContaining('runtime/fetch.py'),url,'/trusted/bootstrap','--session']);
+    expect(JSON.stringify(execute.mock.calls[1]?.slice(0,3))).not.toContain('private-own-session');
+    const denial = expect(second).rejects.toMatchObject({access:'blocked',status:302});
+    pending.shift()!();
+    await denial;
+    await expect(fetcher(url)).rejects.toMatchObject({access:'blocked'});
+    expect(execute).toHaveBeenCalledTimes(2);
+    const other = embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap',session:'reuse'})(url);
+    expect(sent[2]).toEqual([]);
+    pending.shift()!();
+    await other;
+  });
+  it('does not launch a cancelled waiting session request', async () => {
+    let finish: (() => void) | undefined;
+    execute.mockImplementation((...args:unknown[]) => {
+      const done = args[3] as (error: Error | null, stdout: string, stderr: string) => void;
+      finish = () => done(null,JSON.stringify({status:200,body:'ordinary',url,headers:{},sessionCookies:[]}),'');
+      return {stdin:{on:vi.fn(),end:vi.fn()}} as unknown as ChildProcess;
+    });
+    const fetcher=embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap',session:'reuse'});
+    const first=fetcher(url);
+    const controller=new AbortController(); const reason=new Error('cancel waiting');
+    const cancelled=fetcher(url,{signal:controller.signal});
+    controller.abort(reason);
+    await expect(cancelled).rejects.toBe(reason);
+    finish!(); await first;
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+  it('rejects unsupported session configurations before retrieving anything', () => {
+    for (const session of ['',null,'rotate',true] as const) {
+      expect(() => sdk({session:session as 'reuse'})).toThrow('session must be fresh or reuse');
+    }
+    expect(() => sdk({session:'reuse',transport:'http'})).toThrow('only by the built-in embedded');
+    expect(() => sdk({session:'reuse',fetch:vi.fn()})).toThrow('only by the built-in embedded');
+    expect(() => sdk({session:'reuse',traffic:{maxConcurrent:2}})).toThrow('requires traffic.maxConcurrent to be 1');
+    expect(execute).not.toHaveBeenCalled();
   });
 });

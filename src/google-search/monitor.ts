@@ -1,6 +1,7 @@
 import { locationHint, validateDevice } from './location.js';
 import { GoogleSearchError } from './errors.js';
 import { parseGoogleSearchHtml } from './parsers.js';
+import { opaqueSourceIdentity } from './source-redirect.js';
 import type {
   GoogleAiOverview, GoogleAiOverviewBrowserOptions, GoogleAiOverviewBrowserResponse,
   GoogleSearchMonitorMetadata, GoogleSearchMonitorOptions, GoogleSearchMonitorOverview,
@@ -67,7 +68,7 @@ function normalize(value: unknown): NormalizedRequest {
 function redirectLink(value: string): string | undefined {
   try {
     const url = new URL(value);
-    const opaque = url.pathname === '/url' && url.searchParams.get('uoh') === '3' && /^CAES[A-Za-z0-9_-]+$/.test(url.searchParams.get('q') ?? '');
+    const opaque = opaqueSourceIdentity(url) !== undefined;
     return ['www.google.com', 'google.com'].includes(url.hostname) && (url.pathname === '/goto' || opaque) ? value : undefined;
   } catch { return undefined; }
 }

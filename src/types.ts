@@ -109,6 +109,8 @@ export interface KitConfig {
   transport?: 'embedded' | 'http';
   /** Built-in embedded HTTP only; defaults to auto. Fixed families do not fall back or retry denials. */
   ipFamily?: IpFamily;
+  /** Built-in embedded HTTP only. Reuse this client's own anonymous cookies in memory; requests serialize. Defaults to fresh. */
+  session?: 'fresh' | 'reuse';
   locale?: { country?: string; language?: string };
   timeoutMs?: number;
   fetch?: typeof globalThis.fetch;

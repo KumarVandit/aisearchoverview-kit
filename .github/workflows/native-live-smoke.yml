@@ -1,6 +1,17 @@
 name: Native Linux live smoke
 on:
   workflow_dispatch:
+    inputs:
+      session:
+        description: Anonymous session mode
+        type: choice
+        options: [fresh, reuse]
+        default: fresh
+      requests:
+        description: Maximum fresh Search attempts; stop on the first restriction
+        type: choice
+        options: ['7', '100']
+        default: '7'
 permissions:
   contents: read
 concurrency:
@@ -13,6 +24,8 @@ jobs:
     env:
       CARGO_BUILD_JOBS: '2'
       AI_SEARCH_OVERVIEW_CACHE: /tmp/overview-runtime
+      AI_SEARCH_LIVE_SESSION: ${{ inputs.session }}
+      AI_SEARCH_LIVE_REQUESTS: ${{ inputs.requests }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

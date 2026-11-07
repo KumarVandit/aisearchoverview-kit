@@ -11,6 +11,8 @@ Setup requires Git, Rust 1.91+ and Python 3.10+. It builds a pinned embedded Jav
 
 Embedded requests start directly at the requested Search URL. Use `sdk({ipFamily: 'ipv4'})` or `'ipv6'` when a host needs a specific connection family; the default is `'auto'`. This native-transport setting does not guarantee location, access or an Overview, and does not retry Google denials with another family. [Runtime details](docs/runtime.md).
 
+Long-lived services can use `sdk({session: 'reuse'})` to retain their own anonymous session in memory and avoid repeating session setup on every query. Reuse serializes requests, respects cookie expiry and pauses after access denial. It neither caches answers nor guarantees Google access. [Session behavior](docs/runtime.md).
+
 ## Get an Overview
 
 ```ts

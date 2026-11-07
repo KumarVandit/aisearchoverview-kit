@@ -1,4 +1,7 @@
 import json
+import http.cookiejar
+from http.cookies import SimpleCookie
+from email.utils import parsedate_to_datetime
 import os
 import re
 from pathlib import Path
@@ -12,6 +15,76 @@ from curl_cffi import requests, CurlHttpVersion, CurlOpt
 
 MAX_BYTES = 4 * 1024 * 1024
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) mgbrowser/0.9.32'
+
+
+def http_only(cookie):
+    # curl_cffi 0.17.0 uses http_only='True'/'False', unlike stdlib jars.
+    return (cookie.has_nonstandard_attr('HttpOnly') or cookie.has_nonstandard_attr('httponly')
+            or str(cookie.get_nonstandard_attr('http_only', '')).lower() == 'true')
+
+
+def apply_bootstrap_cookie(jar, write):
+    if not isinstance(write, str) or any(c in write for c in '\r\n'):
+        raise ValueError('Invalid bootstrap cookie')
+    parsed = SimpleCookie()
+    parsed.load(write)
+    if list(parsed) != ['SG_SS']:
+        raise ValueError('Unexpected bootstrap cookie')
+    morsel = parsed['SG_SS']
+    domain = morsel['domain'].lstrip('.') or 'www.google.com'
+    path = morsel['path'] or '/'
+    value = morsel.value
+    if domain not in ('www.google.com', 'google.com') or path != '/' or morsel['httponly'] or any(ord(c) < 33 or ord(c) > 126 or c in ';,' for c in value):
+        raise ValueError('Invalid bootstrap cookie scope/value')
+    if any(c.name == 'SG_SS' and c.domain.lstrip('.') == domain and c.path == path and http_only(c) for c in jar):
+        raise ValueError('Cannot overwrite HttpOnly bootstrap cookie')
+    expires = None
+    if morsel['max-age']:
+        if not re.fullmatch(r'-?\d+', morsel['max-age']):
+            raise ValueError('Invalid bootstrap cookie max-age')
+        expires = int(time.time()) + int(morsel['max-age'])
+    elif morsel['expires']:
+        expires = int(parsedate_to_datetime(morsel['expires']).timestamp())
+    if not value or (expires is not None and expires <= time.time()):
+        for old in list(jar):
+            if old.name == 'SG_SS' and old.domain.lstrip('.') == domain and old.path == path:
+                jar.clear(old.domain, old.path, old.name)
+        return
+    jar.set_cookie(http.cookiejar.Cookie(0, 'SG_SS', value, None, False, domain,
+        bool(morsel['domain']), False, path, bool(morsel['path']), bool(morsel['secure']),
+        expires, expires is None, None, None, {}, False))
+
+
+def restore_cookies(rows):
+    if not isinstance(rows, list) or len(rows) > 64 or len(json.dumps(rows)) > 65536:
+        raise ValueError('Invalid anonymous session')
+    jar = http.cookiejar.CookieJar()
+    for row in rows:
+        if not isinstance(row, dict) or set(row) != {'name', 'value', 'domain', 'domainSpecified', 'path', 'secure', 'expires', 'httpOnly'}:
+            raise ValueError('Invalid anonymous cookie')
+        name, value, domain, path = (row[key] for key in ('name', 'value', 'domain', 'path'))
+        if not all(isinstance(v, str) for v in (name, value, domain, path)) or not name or len(name) + len(value) > 8192:
+            raise ValueError('Invalid anonymous cookie value')
+        if domain.lstrip('.') not in ('google.com', 'www.google.com') or path != '/' or any(c in name + value for c in '\r\n;') or '=' in name:
+            raise ValueError('Invalid anonymous cookie scope')
+        if any(type(row[key]) is not bool for key in ('domainSpecified', 'secure', 'httpOnly')) or (row['expires'] is not None and (type(row['expires']) is not int or abs(row['expires']) > 2**53 - 1)):
+            raise ValueError('Invalid anonymous cookie attributes')
+        jar.set_cookie(http.cookiejar.Cookie(0, name, value, None, False, domain, row['domainSpecified'],
+            domain.startswith('.'), path, True, row['secure'], row['expires'], row['expires'] is None,
+            None, None, {'HttpOnly': None} if row['httpOnly'] else {}, False))
+    jar.clear_expired_cookies()
+    return jar
+
+
+def export_cookies(jar):
+    jar.clear_expired_cookies()
+    rows = [{'name': c.name, 'value': c.value, 'domain': c.domain, 'domainSpecified': c.domain_specified,
+             'path': c.path, 'secure': c.secure, 'expires': c.expires,
+             'httpOnly': http_only(c)}
+            for c in jar if c.domain.lstrip('.') in ('google.com', 'www.google.com') and c.path == '/']
+    # Validate our own response and bound the private IPC payload as well as its input.
+    restore_cookies(rows)
+    return rows
 
 
 class DriverError(RuntimeError):
@@ -35,10 +108,11 @@ def access_state(response):
     return None
 
 
-def classified(response):
+def classified(response, stage='initial-search'):
     access = access_state(response)
     response['headers'].pop('Location', None)
     if access:
+        access['stage'] = stage
         response['access'] = access
     return response
 
@@ -72,7 +146,7 @@ def request(session, url, deadline):
     }
 
 
-def fetch(url, executable):
+def fetch(url, executable, cookies=None):
     checked_url(url)
     executable = str(Path(executable).resolve(strict=True))
     ip_family = os.environ.get('AI_SEARCH_OVERVIEW_IP_FAMILY', 'auto')
@@ -82,7 +156,7 @@ def fetch(url, executable):
     ip_resolve = {'auto': 0, 'ipv4': 1, 'ipv6': 2}[ip_family]
     started = time.monotonic()
     deadline = started + 19
-    session = requests.Session(trust_env=False, http_version=CurlHttpVersion.V1_1, curl_options={CurlOpt.IPRESOLVE: ip_resolve}, headers={
+    session = requests.Session(cookies=cookies, trust_env=False, http_version=CurlHttpVersion.V1_1, curl_options={CurlOpt.IPRESOLVE: ip_resolve}, headers={
         'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -97,7 +171,7 @@ def fetch(url, executable):
         metrics = {'initialStatus': first['status'], 'bootstrapExecuted': False}
         html = first['body']
         if first['status'] == 200 and 'knitsail' in html and 'var challenge_version=' in html:
-            readable = '; '.join(cookie.name + '=' + cookie.value for cookie in jar if not cookie.has_nonstandard_attr('HttpOnly') and not cookie.has_nonstandard_attr('httponly'))
+            readable = '; '.join(cookie.name + '=' + cookie.value for cookie in jar if not http_only(cookie))
             payload = json.dumps({'url': url, 'html': html, 'initialCookies': readable, 'cryptoSeed': list(os.urandom(32))})
             process = subprocess.Popen([executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             try:
@@ -118,17 +192,17 @@ def fetch(url, executable):
                 raise DriverError('BOOTSTRAP_NO_NAVIGATION')
             checked_url(target, url)
             for write in computed.get('cookieWrites', []):
-                pair = write.split(';', 1)[0]
-                name, value = pair.split('=', 1)
-                if name != 'SG_SS' or any(character in value for character in '\r\n;'):
-                    raise ValueError('Unexpected bootstrap cookie')
-                session.cookies.set(name, value, domain='www.google.com', path='/')
+                apply_bootstrap_cookie(jar, write)
             result = request(session, target, deadline)
             metrics.update({'bootstrapExecuted': True, 'bootstrapMs': computed['elapsedMs'], 'runtime': computed['runtime']})
         metrics['totalMs'] = round((time.monotonic() - started) * 1000)
         result['metrics'] = metrics
-        return classified(result)
+        return classified(result, 'bootstrap-follow-up' if metrics['bootstrapExecuted'] else 'initial-search')
     finally:
+        if cookies is not None and cookies is not session.cookies.jar:
+            cookies.clear()
+            for cookie in session.cookies.jar:
+                cookies.set_cookie(cookie)
         session.close()
 
 
@@ -138,11 +212,26 @@ def terminate(signum, frame):
 
 if __name__ == '__main__':
     signal.signal(signal.SIGTERM, terminate)
+    jar = None
+    exit_code = 0
     try:
-        if len(sys.argv) != 3:
+        if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--session'):
             raise ValueError('Expected Search URL and bootstrap executable')
-        print(json.dumps(fetch(sys.argv[1], sys.argv[2])))
+        if len(sys.argv) == 4:
+            payload = sys.stdin.read(65537)
+            if len(payload) > 65536:
+                raise ValueError('Anonymous session exceeds limit')
+            jar = restore_cookies(json.loads(payload))
+        result = fetch(sys.argv[1], sys.argv[2], jar)
     except Exception as error:
         code = error.code if isinstance(error, DriverError) else 'RUNTIME_TIMEOUT' if isinstance(error, (TimeoutError, subprocess.TimeoutExpired)) or getattr(error, 'code', None) == 28 else 'INVALID_RESPONSE' if isinstance(error, (ValueError, json.JSONDecodeError)) else 'NETWORK_ERROR'
-        print(json.dumps({'error': {'type': type(error).__name__, 'code': code}}))
-        sys.exit(1)
+        result = {'error': {'type': type(error).__name__, 'code': code}}
+        exit_code = 1
+    if jar is not None:
+        try:
+            result['sessionCookies'] = export_cookies(jar)
+        except ValueError:
+            result = {'error': {'code': 'INVALID_RESPONSE'}}
+            exit_code = 1
+    print(json.dumps(result))
+    sys.exit(exit_code)

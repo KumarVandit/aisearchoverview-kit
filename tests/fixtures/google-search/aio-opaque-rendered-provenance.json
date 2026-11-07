@@ -1,0 +1,22 @@
+{
+  "aio-austin-under-1000-opaque-rendered.html": {
+    "kind": "sanitized-live-rendered-dom",
+    "capturedAt": "2026-11-08",
+    "query": "apartments in austin texas under $1000",
+    "transport": "Local Crawl4AI rendered anonymous Google Search capture; evidence for parser coverage, not browser-free retrieval.",
+    "scope": "Actual enclosing turn with AI Overview heading and aimc main/rhs columns; no outer Search/account chrome.",
+    "sourceSnapshotSha256": "4fe488ca5e7eae63cf71e3128717da80ad409713c78919673d75b5f1c201b27a",
+    "fixtureSha256": "55c92afc5a317ecf6c002fe3a1471bd616203d41a3aa9421aa505ca2cb926880",
+    "sanitization": "Removed comments, scripts, media, SVG, IDs and attributes outside a strict semantic/visibility/citation/ad allowlist; retained only the observed local-place prose controller. Remapped widget identifiers and CAES targets consistently; replaced ved values with fixture tracking markers and removed signatures/timestamps/context values. Retained original sa/source/uoh distinctions and visible/hidden source boundaries. Redacted searchviewer svid. Opaque fixture destinations are non-live placeholders; no publisher destinations, wrappers, answers or citation mappings invented."
+  },
+  "aio-austin-cheap-opaque-rendered.html": {
+    "kind": "sanitized-live-rendered-dom",
+    "capturedAt": "2026-11-08",
+    "query": "apartments in austin texas cheap",
+    "transport": "Local Crawl4AI rendered anonymous Google Search capture; evidence for parser coverage, not browser-free retrieval.",
+    "scope": "Actual enclosing turn with AI Overview heading and aimc main/rhs columns; no outer Search/account chrome.",
+    "sourceSnapshotSha256": "78efee1fe0cf6d898ef2cdf4bb2ced510e55409de8b7355d08933c44f5089cd1",
+    "fixtureSha256": "cf319fdd10d8f1a7274e61041e966e24df0a286e41979163dbd179143bd00eef",
+    "sanitization": "Removed comments, scripts, media, SVG, IDs and attributes outside a strict semantic/visibility/citation/ad allowlist; retained only the observed local-place prose controller. Remapped widget identifiers and CAES targets consistently; replaced ved values with fixture tracking markers and removed signatures/timestamps/context values. Retained original sa/source/uoh distinctions and visible/hidden source boundaries. Redacted searchviewer svid. Opaque fixture destinations are non-live placeholders; no publisher destinations, wrappers, answers or citation mappings invented."
+  }
+}

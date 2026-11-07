@@ -111,6 +111,30 @@
       "sourceProjectionSha256": "b4e08a0ad4fbfc9a34e84a025123506e7720ce8381cb7c948ed3593340f22617",
       "fixtureSha256": "b0c2a13d0c12b70f9f3282cbcabd532ac0b9cd629d02eb2fd0ea745d7d0cbc4a",
       "sanitization": "Parent provided a recursive read-only DOM projection retaining main/rhs text and allowlisted tags/attributes. Wrapper was reconstructed and actual AX-confirmed AI Overview heading added to the fixture. Removed every image src (source-rail thumbnail URLs/data, favicon data URLs and favicon service URLs), UUIDs remapped consistently; removed tracking query parameters and product rds tracking segment; retained native public product IDs and meaningful prds fields, YouTube v/t, ARIA controls and product helper labels. No account headers/cookies/scripts/styles included. This reduced projection cannot establish pixel, image or media fidelity."
+    },
+    "aio-austin-turn-collapsed.html": {
+      "kind": "sanitized-live-rendered-dom",
+      "capturedAt": "2026-11-07",
+      "sourceUrl": "https://www.google.com/search?q=apartments+in+Austin+Texas",
+      "query": "apartments in Austin Texas",
+      "transport": "Ordinary Codex in-app browser; existing signed-in session. No browser cookies or authentication state imported into the kit.",
+      "scope": "Actual enclosing turn subtree with exact AI Overview heading and aimc main/rhs columns; excludes outer account header.",
+      "expansionState": "collapsed",
+      "sourceSnapshotSha256": "fb2732f84793a188dcaeeb3142db9d831c105e3020e92e94189d19b0d34495ee",
+      "fixtureSha256": "e50147deffde186eabda6b3a2977448a763b8a4b300ce70041403f369ad79fb1",
+      "sanitization": "Removed all comments, scripts, stylesheets, media and SVG; strict allowlist retains semantic, visibility, answer/citation and ad-boundary attributes only. Removed request/session/context/tracking attributes and element IDs. Remapped citation identifiers; removed URL queries/fragments and consistently redacted the opaque Google searchviewer svid content identifier (fixture URL is not a live destination). Preserved actual text, heading, main/rhs columns and source rail, including ignored-copy and hidden states. No wrapper, answer, source or pill mapping was fabricated. Retained only the observed local-place prose controller to distinguish its clickable names from ordinary controls."
+    },
+    "aio-austin-turn-expanded.html": {
+      "kind": "sanitized-live-rendered-dom",
+      "capturedAt": "2026-11-07",
+      "sourceUrl": "https://www.google.com/search?q=apartments+in+Austin+Texas",
+      "query": "apartments in Austin Texas",
+      "transport": "Ordinary Codex in-app browser; existing signed-in session. No browser cookies or authentication state imported into the kit.",
+      "scope": "Actual enclosing turn subtree with exact AI Overview heading and aimc main/rhs columns; excludes outer account header.",
+      "expansionState": "expanded",
+      "sourceSnapshotSha256": "ea895f8c768972fa04fd9e2d3e814e3f1612aedb5cb6f24ad353511d296e6a13",
+      "fixtureSha256": "18678e97c26e82fa9abb449eff4133588836c586e6de9277def166040451e45c",
+      "sanitization": "Removed all comments, scripts, stylesheets, media and SVG; strict allowlist retains semantic, visibility, answer/citation and ad-boundary attributes only. Removed request/session/context/tracking attributes and element IDs. Remapped citation identifiers; removed URL queries/fragments and consistently redacted the opaque Google searchviewer svid content identifier (fixture URL is not a live destination). Preserved actual text, heading, main/rhs columns and source rail, including ignored-copy and hidden states. No wrapper, answer, source or pill mapping was fabricated. Retained only the observed local-place prose controller to distinguish its clickable names from ordinary controls."
     }
   }
 }

@@ -18,7 +18,11 @@ The SDK's default `embedded` transport sends HTTP requests and runs the local he
 
 `npx aisearchoverview-kit get "query" --cache DIRECTORY` selects a custom cache. `--bootstrap` and `--python` can select trusted executables for a particular CLI call. `--http` requests plain HTTP without a helper; it may return a JavaScript-required result. Offline `parse` needs no runtime setup.
 
-Every embedded request uses a fresh anonymous HTTP session and starts at the exact requested Search URL, without a preliminary homepage visit. It permits at most one computed same-origin/same-query transition: one initial Search HTTP request plus at most one bootstrap follow-up. Only cookies issued to that session by its Search responses are used; its JavaScript-readable cookies may enter the helper, while HttpOnly cookies remain in the HTTP client. Values and computed navigation are not printed in SDK results. TLS verification remains enabled, and traffic redirects are not followed automatically.
+By default, every embedded request uses a fresh anonymous HTTP session and starts at the exact requested Search URL, without a preliminary homepage visit. It permits at most one computed same-origin/same-query transition: one initial Search HTTP request plus at most one bootstrap follow-up. Only cookies issued to that session by its Search responses are used; its JavaScript-readable cookies may enter the helper, while HttpOnly cookies remain in the HTTP client. Values and computed navigation are not printed in SDK results. TLS verification remains enabled, and traffic redirects are not followed automatically.
+
+For a long-lived service, opt into `sdk({session: 'reuse'})`. This keeps the client's own anonymous Google cookies in process memory between requests, respecting server expiry and deletion. It does not cache answers. Cookies pass privately to the HTTP subprocess through stdin; they are never written to disk or exposed in SDK responses. There is no browser-cookie import, session export or automatic identity reset. Keep the same client alive to benefit; separate processes do not share its state.
+
+Reuse always serializes requests and enables the bounded queue and access-denial pause, even without `traffic`. With explicit traffic controls, `maxConcurrent` must be one. A denied session is retained; later queued calls fail locally during the pause. Session reuse reduces repeated bootstrap work but does not grant a higher Google allowance, guarantee an Overview or implement deferred generation. Forced process termination can prevent the latest response cookies from being recovered; existing in-memory state is retained.
 
 The built-in embedded transport accepts `ipFamily: 'auto' | 'ipv4' | 'ipv6'` in `sdk()` configuration, defaulting to `auto`. For example, `sdk({ipFamily: 'ipv4'})` restricts that client's native HTTP connections to IPv4. Explicit IPv4/IPv6 selections stay fixed; `auto` leaves connection-family selection to libcurl. The SDK does not retry a Google denial using another family. The setting does not change headers, IP geolocation, Overview eligibility or Google's access decisions. It does not apply to `sources.resolve()`, plain HTTP transport or a caller-owned `fetch`; configuring it with either of the latter is rejected. Custom transports must configure their own connections.
 
@@ -32,10 +36,13 @@ The native path parses the initial accepted Search HTML and supported literal tr
 
 Recognized challenge redirects, HTTP denials and CAPTCHA pages return `status: 'blocked'`. `metadata.httpStatus` preserves the observed status, including a challenge delivered as HTTP 302. `metadata.retryAfterMs` provides a pause hint when available. Regional redirects return `unverified` with an explanatory reason. No redirect is followed automatically, and neither case is reported as a confirmed absent Overview.
 
+For native access denials, the reason identifies whether Google refused the initial Search request before bootstrap execution or the follow-up after computation. This records the observed stage; it does not identify Google's private decision rule. Older or custom runtime bridges may omit the stage.
+
 Reuse one client per service to apply its opt-in traffic controls across requests:
 
 ```ts
 const client = sdk({
+  session: 'reuse',
   traffic: { maxConcurrent: 1, maxQueued: 64, minIntervalMs: 10_000, cooldownMs: 60_000 },
 });
 const result = await client.overview.get(query);

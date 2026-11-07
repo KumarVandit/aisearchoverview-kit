@@ -17,6 +17,8 @@ const search = sdk({
 
 `ipFamily` accepts `'auto'` (default), `'ipv4'` or `'ipv6'` for the built-in embedded HTTP transport. Invalid values, plain HTTP transport, and custom-fetch combinations are configuration errors. This selects a connection family, not an exit country or an access workaround. Explicit IPv4/IPv6 selections stay fixed; `auto` uses libcurl's normal connection selection. Denials are not retried. Citation resolution uses its separate HTTP transport and is unaffected. The public `IpFamily` type is exported from both package entries.
 
+`session: 'fresh' | 'reuse'` applies only to the built-in embedded transport and defaults to `fresh`. Reuse retains the client's own anonymous cookies in memory, honors expiry, serializes Search calls and pauses queued work after access denial. Reuse with `traffic.maxConcurrent` other than one is rejected. No cookies or answers are persisted or imported; reuse does not prevent Google restrictions or guarantee an Overview. See [runtime behavior](runtime.md).
+
 ## overview.get
 
 `get(query: string, options?: OverviewOptions): Promise<OverviewResult>`
