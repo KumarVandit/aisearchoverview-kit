@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — 2026-11-07
+
+- Add explicit IPv4/IPv6 selection for the built-in native HTTP transport, without automatic family fallback or denial retries.
+- Start native requests at the requested Search URL, omitting the preliminary homepage request.
+- Preserve Search-page classification in Overview metadata, including JavaScript and consent requirements.
+- Bound opt-in traffic queues with `maxQueued`, releasing queued capacity on cancellation and rejecting overflow locally.
+- Document runtime limits: hosted acceptance, deferred Overview generation and per-query latency remain unverified.
+
 ## 0.3.1 — 2026-11-06
 
 - Return recognized native transport access challenges as `blocked`, preserving the actual upstream HTTP status and a cooldown hint.
