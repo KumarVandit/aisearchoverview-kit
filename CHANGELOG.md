@@ -7,6 +7,7 @@
 - Preserve the HTTP client's actual HttpOnly flags so protected cookies stay out of the embedded script.
 - Parse the observed labelled Overview turn layout, including source cards and local property names, while excluding UI controls and source cards from organic results.
 - Distinguish native access denials received before bootstrap execution from denials on its follow-up request.
+- Preserve the observed rendered citation redirect format and match citation groups across differing tracking parameters, retaining original source URLs without inventing publisher destinations.
 - Keep hosted access, deferred Overview generation and per-query response times explicitly unverified.
 
 ## 0.4.0 — 2026-11-07
