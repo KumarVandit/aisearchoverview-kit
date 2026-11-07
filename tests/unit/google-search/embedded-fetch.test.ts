@@ -1,7 +1,7 @@
 import {execFile, type ChildProcess} from 'node:child_process';
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {embeddedSearchFetch} from '../../../src/transport/embedded.js';
-import {sdk} from '../../../src/index.js';
+import {sdk, type IpFamily} from '../../../src/index.js';
 vi.mock('node:child_process', () => ({execFile: vi.fn()}));
 const execute = vi.mocked(execFile);
 const url = 'https://www.google.com/search?q=example&hl=en&gl=us';
@@ -13,7 +13,36 @@ function output(value: unknown, error: Error | null = null): void {
   });
 }
 beforeEach(() => { execute.mockReset(); });
+afterEach(() => { vi.unstubAllEnvs(); });
 describe('embedded Search fetch bridge', () => {
+  it.each([undefined, 'auto', 'ipv4', 'ipv6'] as const)('passes IP family %s through a fixed child environment without changing the request', async ipFamily => {
+    vi.stubEnv('AI_SEARCH_OVERVIEW_IP_FAMILY', 'untrusted-host-setting');
+    output({status:200,body:'<html>actual response</html>',url,headers:{}});
+    const response = await embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap', ipFamily})(url);
+    expect(await response.text()).toBe('<html>actual response</html>');
+    expect(execute.mock.calls[0]?.[1]).toEqual([expect.stringContaining('runtime/fetch.py'),url,'/trusted/bootstrap']);
+    expect(execute.mock.calls[0]?.[2]).toMatchObject({env:{AI_SEARCH_OVERVIEW_IP_FAMILY:ipFamily ?? 'auto'}});
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+  it('wires the public built-in embedded configuration to the driver', async () => {
+    output({status:200,body:'<html>unknown layout</html>',url,headers:{}});
+    const result = await sdk({ipFamily:'ipv4',bootstrapExecutable:process.execPath,pythonExecutable:process.execPath}).overview.get('example');
+    expect(result.status).toBe('unverified');
+    expect(execute.mock.calls[0]?.[2]).toMatchObject({env:{AI_SEARCH_OVERVIEW_IP_FAMILY:'ipv4'}});
+  });
+  it.each(['ipv5', 'IPv4', '', null, 4, {}])('rejects invalid IP family %s before creating a child', ipFamily => {
+    expect(() => embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap',ipFamily:ipFamily as IpFamily})).toThrow('ipFamily must be auto, ipv4 or ipv6');
+    expect(() => sdk({ipFamily:ipFamily as IpFamily})).toThrow('ipFamily must be auto, ipv4 or ipv6');
+    expect(execute).not.toHaveBeenCalled();
+  });
+  it('rejects IP-family configuration for plain HTTP or caller-owned fetch instead of silently ignoring it', () => {
+    for (const ipFamily of ['auto','ipv4','ipv6'] as const) {
+      for (const config of [{transport:'http' as const}, {fetch:vi.fn<typeof fetch>()}, {transport:'embedded' as const,fetch:vi.fn<typeof fetch>()}]) {
+        expect(() => sdk({...config,ipFamily})).toThrow('supported only by the built-in embedded transport');
+      }
+    }
+    expect(execute).not.toHaveBeenCalled();
+  });
   it('reports challenge redirects as blocked and preserves upstream status without exposing tokens',async()=>{
     output({status:302,body:'',url:'https://www.google.com/',headers:{'Retry-After':'120'},access:{kind:'blocked',status:302}});
     const fetch=embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'});

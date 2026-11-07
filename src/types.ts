@@ -1,3 +1,5 @@
+import type { GoogleSearchResponse } from './google-search/types.js';
+
 export interface OverviewSource {
   description?: string;
   position: number;
@@ -46,6 +48,8 @@ export interface OverviewMetadata {
   transport: 'embedded' | 'http' | 'snapshot';
   durationMs: number;
   httpStatus?: number;
+  /** Search-page classification; an HTTP 200 response can still require JavaScript or consent. */
+  searchStatus?: GoogleSearchResponse['status'];
   /** Remaining upstream/client cooldown when an access denial is observed. */
   retryAfterMs?: number;
   sourceUrl?: string;
@@ -96,11 +100,15 @@ export interface SourceResolutionResult {
   warnings: string[];
 }
 
+export type IpFamily = 'auto' | 'ipv4' | 'ipv6';
+
 export interface KitConfig {
   /** Optional pacing and denial cooldown shared by this client’s Search and Overview requests. */
   traffic?: import('./transport/coordinator.js').TrafficOptions;
   /** Embedded HTTP retrieval is the default; plain HTTP is useful with custom fetch implementations. */
   transport?: 'embedded' | 'http';
+  /** Built-in embedded HTTP only; defaults to auto. Fixed families do not fall back or retry denials. */
+  ipFamily?: IpFamily;
   locale?: { country?: string; language?: string };
   timeoutMs?: number;
   fetch?: typeof globalThis.fetch;

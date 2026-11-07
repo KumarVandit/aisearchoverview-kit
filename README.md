@@ -9,6 +9,8 @@ npx aisearchoverview-kit setup
 
 Setup requires Git, Rust 1.91+ and Python 3.10+. It builds a pinned embedded JavaScript/DOM runtime and installs a pinned HTTP client in your user cache. npm installation and SDK imports do not run setup automatically. The working HTTP method launches no Chrome, Playwright or browser application; its embedded library still contains browser-engine DOM/CSS/layout code. Google can block individual sessions.
 
+Embedded requests start directly at the requested Search URL. Use `sdk({ipFamily: 'ipv4'})` or `'ipv6'` when a host needs a specific connection family; the default is `'auto'`. This native-transport setting does not guarantee location, access or an Overview, and does not retry Google denials with another family. [Runtime details](docs/runtime.md).
+
 ## Get an Overview
 
 ```ts

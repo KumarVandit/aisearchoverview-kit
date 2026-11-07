@@ -46,6 +46,26 @@ describe('public Overview SDK', () => {
     await expect(sdk({ fetch: vi.fn() }).overview.get('')).rejects.toMatchObject({ kind: 'validation' });
     await expect(sdk({ fetch: vi.fn<typeof fetch>().mockRejectedValue(new Error('offline')) }).overview.get('query')).rejects.toBeInstanceOf(AiSearchError);
   });
+  it.each([
+    {body:loadNestedFixture('google-search', 'javascript-required.html'), searchStatus:'javascript-required', reason:'requiring JavaScript'},
+    {body:'<html><body><form action="https://consent.google.com/save"><button>Continue</button></form></body></html>', searchStatus:'consent-required', reason:'requiring consent'},
+  ])('preserves HTTP 200 $searchStatus without claiming an absent Overview', async ({body, searchStatus, reason}) => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(body, {status: 200}));
+    const result = await sdk({fetch: fetcher}).overview.get('example');
+    expect(result).toMatchObject({status:'unverified',sources:[],metadata:{httpStatus:200,searchStatus}});
+    expect(result.reason).toContain(reason);
+    expect(result.reason).toContain('presence is unverified');
+    expect(result).not.toHaveProperty('text');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it('keeps a denied JavaScript-shaped response blocked rather than overriding its access reason', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(loadNestedFixture('google-search', 'javascript-required.html'), {status:403}));
+    const result = await sdk({fetch: fetcher}).overview.get('example');
+    expect(result).toMatchObject({status:'blocked',sources:[],metadata:{httpStatus:403,searchStatus:'blocked'}});
+    expect(result.reason).not.toContain('requiring JavaScript');
+    expect(result).not.toHaveProperty('text');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('preserves the caller cancellation reason', async () => {
     const controller = new AbortController(); const reason = new Error('stop'); controller.abort(reason);
     await expect(sdk({ fetch: vi.fn() }).overview.get('query', { signal: controller.signal })).rejects.toBe(reason);

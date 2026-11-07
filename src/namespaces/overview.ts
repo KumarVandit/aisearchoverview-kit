@@ -14,14 +14,22 @@ export function overviewResult(report: GoogleSearchMonitorResponse, query: strin
     throw new AiSearchError(report.error.message, kind, report.metadata.httpStatus);
   }
   const data = report.success ? report.result.aioverview : undefined;
+  const searchStatus = report.metadata.searchStatus;
+  const searchReason = report.metadata.aiOverview.status === 'unverified'
+    ? searchStatus === 'javascript-required'
+      ? 'The Search response was classified as requiring JavaScript; Overview presence is unverified.'
+      : searchStatus === 'consent-required'
+        ? 'The Search response was classified as requiring consent; Overview presence is unverified.'
+        : undefined
+    : undefined;
   const base = {
     query,
     sources: (data?.sources ?? []).map(source => ({ position: source.position, title: source.label, url: source.url, ...(source.description ? { description: source.description } : {}), ...(source.redirectLink ? { redirectUrl: source.redirectLink } : {}) })),
-    reason: report.metadata.aiOverview.reason ?? (!report.success ? report.error.message : 'Overview presence was not established.'),
+    reason: searchReason ?? report.metadata.aiOverview.reason ?? (!report.success ? report.error.message : 'Overview presence was not established.'),
     metadata: {
       ...(options.location!==undefined?{location:options.location}:{}),...(options.device?{device:options.device}:{}),country: options.country ?? config.locale?.country ?? 'US', language: options.language ?? config.locale?.language ?? 'en',
       transport: snapshot ? 'snapshot' as const : config.transport ?? 'embedded', durationMs: report.metadata.timing?.totalMs ?? 0,
-      httpStatus: report.metadata.httpStatus,...(report.metadata.retryAfterMs!==undefined?{retryAfterMs:report.metadata.retryAfterMs}:{}), sourceUrl: report.metadata.sourceUrl, completeness: 'unverified' as const,
+      httpStatus: report.metadata.httpStatus,...(searchStatus!==undefined?{searchStatus}:{}),...(report.metadata.retryAfterMs!==undefined?{retryAfterMs:report.metadata.retryAfterMs}:{}), sourceUrl: report.metadata.sourceUrl, completeness: 'unverified' as const,
       warnings: report.metadata.warnings,
     },
   };

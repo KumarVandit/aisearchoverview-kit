@@ -1,7 +1,7 @@
 import { coordinatedSearchFetch } from './transport/coordinator.js';
 import { existsSync } from 'node:fs';
 import { GoogleSearchClient } from './google-search/client.js';
-import { embeddedSearchFetch } from './transport/embedded.js';
+import { embeddedSearchFetch, normalizeIpFamily } from './transport/embedded.js';
 import { runtimePaths } from './runtime.js';
 import { AiSearchError } from './errors.js';
 import { OverviewNamespace } from './namespaces/overview.js';
@@ -21,13 +21,15 @@ export class AiSearchOverviewClient {
     const timeoutMs = config.timeoutMs ?? 20_000;
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) throw new AiSearchError('timeoutMs must be a positive bounded number', 'configuration');
     const transport = config.transport ?? (config.fetch ? 'http' : 'embedded');
+    const ipFamily = normalizeIpFamily(config.ipFamily);
+    if (config.ipFamily !== undefined && (transport !== 'embedded' || config.fetch)) throw new AiSearchError('ipFamily is supported only by the built-in embedded transport; configure networking in your custom fetch instead', 'configuration');
     let beforeGet: (() => void) | undefined;
     let fetcher = config.fetch ?? globalThis.fetch;
     if (!config.fetch && transport === 'embedded') {
       const paths = runtimePaths(config.cacheDirectory);
       const bootstrapExecutable = config.bootstrapExecutable ?? paths.bootstrapExecutable;
       const pythonExecutable = config.pythonExecutable ?? paths.pythonExecutable;
-      const embedded = embeddedSearchFetch({ bootstrapExecutable, pythonExecutable });
+      const embedded = embeddedSearchFetch({ bootstrapExecutable, pythonExecutable, ipFamily });
       beforeGet = () => {
         if (!existsSync(bootstrapExecutable) || !existsSync(pythonExecutable)) throw new AiSearchError('Runtime not installed. Run: npx aisearchoverview-kit setup', 'configuration');
       };

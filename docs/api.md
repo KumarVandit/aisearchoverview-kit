@@ -8,11 +8,14 @@ Import `sdk`, `AiSearchError`, public types and runtime setup from `aisearchover
 const search = sdk({
   locale: { country: 'US', language: 'en' },
   transport: 'embedded',
+  ipFamily: 'auto',
   timeoutMs: 20_000,
 });
 ```
 
 `KitConfig` also accepts `fetch`, `cacheDirectory`, `bootstrapExecutable` and `pythonExecutable`. Supplying a custom fetch defaults the transport to `http`; it must support the standard fetch signal contract. Embedded mode uses the optional installed runtime. Construction and offline parsing do not build or execute it.
+
+`ipFamily` accepts `'auto'` (default), `'ipv4'` or `'ipv6'` for the built-in embedded HTTP transport. Invalid values, plain HTTP transport, and custom-fetch combinations are configuration errors. This selects a connection family, not an exit country or an access workaround. Explicit IPv4/IPv6 selections stay fixed; `auto` uses libcurl's normal connection selection. Denials are not retried. Citation resolution uses its separate HTTP transport and is unaffected. The public `IpFamily` type is exported from both package entries.
 
 ## overview.get
 
@@ -29,7 +32,7 @@ The discriminated `OverviewResult` has a `status`, `query`, `reason`, `sources` 
 
 `OverviewSource` contains `position`, `title`, `url` and optional `redirectUrl`. Positions are one-based. `url` may initially be an opaque Google citation URL. A publisher's title is not used to guess its URL.
 
-`OverviewMetadata` contains `country`, `language`, `transport`, `durationMs`, optional `sourceUrl`/`httpStatus`, `warnings`, and `completeness: 'unverified'`. Request duration includes retrieval, bootstrap and parsing. Snapshot duration describes local parsing, not Google's generation time.
+`OverviewMetadata` contains `country`, `language`, `transport`, `durationMs`, optional `sourceUrl`/`httpStatus`/`searchStatus`, `warnings`, and `completeness: 'unverified'`. `searchStatus` preserves the Search-page classification: `results`, `empty`, `blocked`, `javascript-required`, `consent-required` or `unrecognized`. An HTTP 200 JavaScript- or consent-required response remains an unverified Overview with an explicit reason; it is not a confirmed absent Overview. Request duration includes retrieval, bootstrap and parsing. Snapshot duration describes local parsing, not Google's generation time.
 
 ## overview.parse
 

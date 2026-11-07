@@ -2,6 +2,8 @@ import { existsSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { GoogleSearchError } from '../google-search/errors.js';
+import { AiSearchError } from '../errors.js';
+import type { IpFamily } from '../types.js';
 
 const runtimeErrors:Record<string,{kind:'timeout'|'parse'|'network';message:string}>={
   RUNTIME_TIMEOUT:{kind:'timeout',message:'Embedded Search runtime exceeded its execution deadline.'},
@@ -16,10 +18,19 @@ const runtimeErrors:Record<string,{kind:'timeout'|'parse'|'network';message:stri
 export interface EmbeddedSearchOptions {
   bootstrapExecutable: string;
   pythonExecutable?: string;
+  /** Address family for this embedded HTTP client; defaults to auto. Fixed families never fall back. */
+  ipFamily?: IpFamily;
+}
+
+export function normalizeIpFamily(value: unknown): IpFamily {
+  if (value === undefined) return 'auto';
+  if (value !== 'auto' && value !== 'ipv4' && value !== 'ipv6') throw new AiSearchError('ipFamily must be auto, ipv4 or ipv6', 'configuration');
+  return value;
 }
 
 /** Runs a cold anonymous HTTP session with the separately built embedded DOM/JavaScript library. */
 export function embeddedSearchFetch(options: EmbeddedSearchOptions): typeof globalThis.fetch {
+  const ipFamily = normalizeIpFamily(options.ipFamily);
   const packaged = fileURLToPath(new URL('../runtime/fetch.py', import.meta.url));
   const driver = existsSync(packaged) ? packaged : fileURLToPath(new URL('../../runtime/fetch.py', import.meta.url));
   return async (input, init) => {
@@ -33,6 +44,7 @@ export function embeddedSearchFetch(options: EmbeddedSearchOptions): typeof glob
     const stdout = await new Promise<string>((resolve, reject) => {
       execFile(options.pythonExecutable ?? 'python3', [driver, url.toString(), options.bootstrapExecutable], {
         signal: signal ?? undefined, timeout: 20_000, maxBuffer: 28 * 1024 * 1024,
+        env: { ...process.env, AI_SEARCH_OVERVIEW_IP_FAMILY: ipFamily },
       }, (error, stdout) => {
         if(signal?.aborted){reject(signal.reason);return;}
         if(error){
