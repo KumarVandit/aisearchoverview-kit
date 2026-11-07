@@ -1,0 +1,33 @@
+name: Native Linux live smoke
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-linux-live-smoke
+  cancel-in-progress: false
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CARGO_BUILD_JOBS: '2'
+      AI_SEARCH_OVERVIEW_CACHE: ${{ runner.temp }}/overview-runtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@1.91.0
+      - name: Install native build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential pkg-config libssl-dev libclang-dev libfontconfig1-dev libfreetype6-dev
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - name: Build pinned native runtime
+        run: node dist/cli.js setup --python python3
+      - name: Observe seven fresh Austin searches
+        run: node scripts/native-live-smoke.mjs
