@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 40
     env:
       CARGO_BUILD_JOBS: '2'
-      AI_SEARCH_OVERVIEW_CACHE: ${{ runner.temp }}/overview-runtime
+      AI_SEARCH_OVERVIEW_CACHE: /tmp/overview-runtime
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
