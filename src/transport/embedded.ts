@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { GoogleSearchError } from '../google-search/errors.js';
 import { AiSearchError } from '../errors.js';
 import type { IpFamily } from '../types.js';
+import { coordinatedSearchFetch } from './coordinator.js';
 
 const runtimeErrors:Record<string,{kind:'timeout'|'parse'|'network';message:string}>={
   RUNTIME_TIMEOUT:{kind:'timeout',message:'Embedded Search runtime exceeded its execution deadline.'},
@@ -20,6 +21,8 @@ export interface EmbeddedSearchOptions {
   pythonExecutable?: string;
   /** Address family for this embedded HTTP client; defaults to auto. Fixed families never fall back. */
   ipFamily?: IpFamily;
+  /** Retain this client's own anonymous cookies in memory. Reuse serializes requests. */
+  session?: 'fresh' | 'reuse';
 }
 
 export function normalizeIpFamily(value: unknown): IpFamily {
@@ -28,12 +31,15 @@ export function normalizeIpFamily(value: unknown): IpFamily {
   return value;
 }
 
-/** Runs a cold anonymous HTTP session with the separately built embedded DOM/JavaScript library. */
+/** Uses the separately built embedded DOM/JavaScript library; never imports browser state. */
 export function embeddedSearchFetch(options: EmbeddedSearchOptions): typeof globalThis.fetch {
   const ipFamily = normalizeIpFamily(options.ipFamily);
+  if (options.session !== undefined && !['fresh','reuse'].includes(options.session)) throw new AiSearchError('session must be fresh or reuse', 'configuration');
+  const reuse = options.session === 'reuse';
+  let cookies: unknown[] = [];
   const packaged = fileURLToPath(new URL('../runtime/fetch.py', import.meta.url));
   const driver = existsSync(packaged) ? packaged : fileURLToPath(new URL('../../runtime/fetch.py', import.meta.url));
-  return async (input, init) => {
+  const fetcher: typeof globalThis.fetch = async (input, init) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
     const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
@@ -42,11 +48,24 @@ export function embeddedSearchFetch(options: EmbeddedSearchOptions): typeof glob
     }
     if (signal?.aborted) throw signal.reason;
     const stdout = await new Promise<string>((resolve, reject) => {
-      execFile(options.pythonExecutable ?? 'python3', [driver, url.toString(), options.bootstrapExecutable], {
+      const child = execFile(options.pythonExecutable ?? 'python3', [driver, url.toString(), options.bootstrapExecutable, ...(reuse ? ['--session'] : [])], {
         signal: signal ?? undefined, timeout: 20_000, maxBuffer: 28 * 1024 * 1024,
         env: { ...process.env, AI_SEARCH_OVERVIEW_IP_FAMILY: ipFamily },
       }, (error, stdout) => {
         if(signal?.aborted){reject(signal.reason);return;}
+        if (reuse) {
+          // Private IPC only: never attach the jar to a public Response, error or log.
+          let state: unknown;
+          try { state = (JSON.parse(stdout) as {sessionCookies?:unknown}).sessionCookies; } catch {}
+          if (state !== undefined) {
+            if (!Array.isArray(state) || state.length > 64 || JSON.stringify(state).length > 65536) {
+              reject(new GoogleSearchError('Invalid anonymous session response','parse')); return;
+            }
+            cookies = state;
+          } else if (!error) {
+            reject(new GoogleSearchError('Embedded Search did not return anonymous session state','parse')); return;
+          }
+        }
         if(error){
           let code:unknown;try{code=(JSON.parse(stdout) as {error?:{code?:unknown}}).error?.code;}catch{}
           const known=typeof code==='string'&&Object.hasOwn(runtimeErrors,code)?runtimeErrors[code]:undefined;
@@ -54,6 +73,10 @@ export function embeddedSearchFetch(options: EmbeddedSearchOptions): typeof glob
         }
         else resolve(stdout);
       });
+      if (reuse) {
+        child.stdin?.on('error', () => { /* Process failure is reported by the callback without disclosing IPC. */ });
+        child.stdin?.end(JSON.stringify(cookies));
+      }
     });
     const result = JSON.parse(stdout) as { status: number; body: string; url: string; headers: Record<string, string>; access?:{kind?:unknown;status?:unknown} };
     if (!Number.isInteger(result.status) || result.status < 200 || result.status > 599 || typeof result.body !== 'string') throw new Error('Invalid embedded Search response');
@@ -72,4 +95,7 @@ export function embeddedSearchFetch(options: EmbeddedSearchOptions): typeof glob
     Object.defineProperty(response, 'url', { value: url.toString() });
     return response;
   };
+  // A single jar cannot safely be mutated by overlapping child processes. Keep it
+  // after restrictions and pause queued work rather than reset/retry the identity.
+  return reuse ? coordinatedSearchFetch(fetcher, {maxConcurrent:1, minIntervalMs:0}) : fetcher;
 }
