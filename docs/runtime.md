@@ -36,6 +36,8 @@ The native path parses the initial accepted Search HTML and supported literal tr
 
 Recognized challenge redirects, HTTP denials and CAPTCHA pages return `status: 'blocked'`. `metadata.httpStatus` preserves the observed status, including a challenge delivered as HTTP 302. `metadata.retryAfterMs` provides a pause hint when available. Regional redirects return `unverified` with an explanatory reason. No redirect is followed automatically, and neither case is reported as a confirmed absent Overview.
 
+For native access denials, the reason identifies whether Google refused the initial Search request before bootstrap execution or the follow-up after computation. This records the observed stage; it does not identify Google's private decision rule. Older or custom runtime bridges may omit the stage.
+
 Reuse one client per service to apply its opt-in traffic controls across requests:
 
 ```ts

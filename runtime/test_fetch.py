@@ -100,7 +100,7 @@ class FetchTests(unittest.TestCase):
         session = Session()
         with patch.object(session, 'get', return_value=types.SimpleNamespace(status_code=302, url=URL, headers={'Location': 'https://www.google.com/sorry/index?continue=private-token'}, content=b'')) as get, patch.object(driver.requests, 'Session', return_value=session), patch.object(driver.subprocess, 'Popen') as execute:
             result = driver.fetch(URL, sys.executable)
-            self.assertEqual(result['access'], {'kind': 'blocked', 'status': 302})
+            self.assertEqual(result['access'], {'kind': 'blocked', 'status': 302, 'stage': 'initial-search'})
             self.assertNotIn('private-token', json.dumps(result))
             get.assert_called_once_with(URL, timeout=ANY, allow_redirects=False)
             execute.assert_not_called()
@@ -130,7 +130,7 @@ class FetchTests(unittest.TestCase):
                 session.responses = [(status, body)]
                 with patch.object(driver.requests, 'Session', return_value=session), patch.object(driver.subprocess, 'Popen') as execute:
                     result = driver.fetch(URL, sys.executable)
-                self.assertEqual(result['access'], {'kind': 'blocked', 'status': status})
+                self.assertEqual(result['access'], {'kind': 'blocked', 'status': status, 'stage': 'initial-search'})
                 self.assertEqual([call[0] for call in session.calls], [URL])
                 self.assertTrue(session.closed)
                 execute.assert_not_called()
@@ -142,6 +142,22 @@ class FetchTests(unittest.TestCase):
                 self.execute(session, Process(self.computed(navigationUrl=target)))
             self.assertEqual(len(session.calls), 1)
             self.assertTrue(session.closed)
+
+    def test_completed_bootstrap_follow_up_denial_retains_its_actual_stage(self):
+        session = Session()
+        session.responses = [(200, 'knitsail var challenge_version=0;'), (302, 'denied')]
+        get = session.get
+        def response(url, **kwargs):
+            value = get(url, **kwargs)
+            if value.status_code == 302:
+                value.headers['Location'] = 'https://www.google.com/sorry/index?continue=private-token'
+            return value
+        session.get = response
+        result = self.execute(session, Process(self.computed()))
+        self.assertEqual(result['access'], {'kind': 'blocked', 'status': 302, 'stage': 'bootstrap-follow-up'})
+        self.assertTrue(result['metrics']['bootstrapExecuted'])
+        self.assertEqual(len(session.calls), 2)
+        self.assertNotIn('private-token', json.dumps(result))
 
     def test_execution_errors_and_pending_requests_do_not_get_replayed(self):
         for changes in [{'errors': ['failed']}, {'engine': {'fatal_reason': 'budget'}}, {'fetchRequestsNotExecuted': 1}]:

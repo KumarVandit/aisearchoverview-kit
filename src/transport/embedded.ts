@@ -78,16 +78,19 @@ export function embeddedSearchFetch(options: EmbeddedSearchOptions): typeof glob
         child.stdin?.end(JSON.stringify(cookies));
       }
     });
-    const result = JSON.parse(stdout) as { status: number; body: string; url: string; headers: Record<string, string>; access?:{kind?:unknown;status?:unknown} };
+    const result = JSON.parse(stdout) as { status: number; body: string; url: string; headers: Record<string, string>; access?:{kind?:unknown;status?:unknown;stage?:unknown} };
     if (!Number.isInteger(result.status) || result.status < 200 || result.status > 599 || typeof result.body !== 'string') throw new Error('Invalid embedded Search response');
     if(result.access){
       const access=result.access.kind;
       if(!['blocked','regional-redirect','redirect'].includes(String(access))||result.access.status!==result.status)throw new GoogleSearchError('Invalid embedded Search access classification','parse');
       const messages={blocked:'Google returned an access challenge. Pause requests and respect the upstream restriction.','regional-redirect':'Google redirected this session to a regional Search service. Check the deployment region; no redirect was followed.',redirect:'Google returned an unsupported redirect. Overview presence is unverified; no redirect was followed.'};
       const kind=access as keyof typeof messages;
+      const stage=result.access.stage;
+      if(stage!==undefined&&stage!=='initial-search'&&stage!=='bootstrap-follow-up')throw new GoogleSearchError('Invalid embedded Search access stage','parse');
+      const stageMessage=stage==='initial-search'?' This happened on the initial Search request, before bootstrap execution.':stage==='bootstrap-follow-up'?' This happened on the Search follow-up after bootstrap execution.':'';
       const retry=new Headers(result.headers).get('Retry-After')??'';
       const delay=/^\d+$/.test(retry)?Number(retry)*1000:Date.parse(retry)-Date.now();
-      throw new GoogleSearchError(messages[kind],'http',result.status,kind==='blocked'?Math.min(2_147_483_647,Math.max(60_000,Number.isFinite(delay)?delay:0)):undefined,{access:kind});
+      throw new GoogleSearchError(messages[kind]+stageMessage,'http',result.status,kind==='blocked'?Math.min(2_147_483_647,Math.max(60_000,Number.isFinite(delay)?delay:0)):undefined,{access:kind});
     }
     const finalUrl = new URL(result.url);
     if (finalUrl.origin !== url.origin || finalUrl.pathname !== '/search') throw new Error('Unexpected embedded Search response URL');

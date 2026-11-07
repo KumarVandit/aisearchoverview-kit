@@ -59,6 +59,14 @@ describe('embedded Search fetch bridge', () => {
     expect(response.status).toBe('unverified');expect(response.reason).toContain('regional Search');
     expect(response.metadata.httpStatus).toBe(302);expect(execute).toHaveBeenCalledTimes(1);
   });
+  it.each([['initial-search','before bootstrap execution'],['bootstrap-follow-up','after bootstrap execution']])('identifies the actual %s denial phase without disclosing process state',async(stage,reason)=>{
+    output({status:302,body:'',url,headers:{},access:{kind:'blocked',status:302,stage}});
+    const result=await sdk({fetch:embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'})}).overview.get('example');
+    expect(result.status).toBe('blocked');
+    expect(result.reason).toContain(reason);
+    expect(result.metadata.httpStatus).toBe(302);
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
   it.each([['RUNTIME_TIMEOUT','timeout'],['BOOTSTRAP_FAILED','parse'],['BOOTSTRAP_INCOMPLETE','parse'],['NETWORK_ERROR','network']])('preserves the safe runtime failure %s through the SDK',async(code,kind)=>{
     output({error:{code,message:'private-cookie-do-not-expose'}},new Error('raw process details do-not-expose'));
     await expect(sdk({fetch:embeddedSearchFetch({bootstrapExecutable:'/trusted/bootstrap'})}).overview.get('example')).rejects.toMatchObject({kind});

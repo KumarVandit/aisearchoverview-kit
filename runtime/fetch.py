@@ -108,10 +108,11 @@ def access_state(response):
     return None
 
 
-def classified(response):
+def classified(response, stage='initial-search'):
     access = access_state(response)
     response['headers'].pop('Location', None)
     if access:
+        access['stage'] = stage
         response['access'] = access
     return response
 
@@ -196,7 +197,7 @@ def fetch(url, executable, cookies=None):
             metrics.update({'bootstrapExecuted': True, 'bootstrapMs': computed['elapsedMs'], 'runtime': computed['runtime']})
         metrics['totalMs'] = round((time.monotonic() - started) * 1000)
         result['metrics'] = metrics
-        return classified(result)
+        return classified(result, 'bootstrap-follow-up' if metrics['bootstrapExecuted'] else 'initial-search')
     finally:
         if cookies is not None and cookies is not session.cookies.jar:
             cookies.clear()
