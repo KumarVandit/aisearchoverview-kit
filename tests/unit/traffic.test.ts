@@ -5,6 +5,30 @@ afterEach(()=>vi.useRealTimers());
 const response=(status=200,body='synthetic',headers:Record<string,string>={})=>({status,headers:new Headers(headers),clone:()=>({text:async()=>body})}) as Response;
 
 describe('per-client Search traffic coordinator, synthetic upstream only',()=>{
+  it('rejects excess queued work locally and releases capacity when a waiting request is cancelled',async()=>{
+    let finish!:()=>void;
+    const upstream=vi.fn<typeof fetch>().mockImplementationOnce(async()=>{await new Promise<void>(resolve=>{finish=resolve;});return response();}).mockResolvedValue(response());
+    const fetcher=coordinatedSearchFetch(upstream,{maxConcurrent:1,maxQueued:1,minIntervalMs:0});
+    const first=fetcher(target),controller=new AbortController();
+    const second=fetcher(target,{signal:controller.signal});
+    await expect(fetcher(target)).rejects.toMatchObject({kind:'http',status:503,access:undefined});
+    expect(upstream).toHaveBeenCalledTimes(1);
+    const reason=new Error('cancel queued work'),cancelled=expect(second).rejects.toBe(reason);
+    controller.abort(reason);await cancelled;
+    const replacement=fetcher(target);finish();await Promise.all([first,replacement]);
+    expect(upstream).toHaveBeenCalledTimes(2);
+    await fetcher(target);expect(upstream).toHaveBeenCalledTimes(3);
+  });
+  it('supports no waiting queue, including calls held only by start spacing',async()=>{
+    vi.useFakeTimers();const upstream=vi.fn<typeof fetch>().mockResolvedValue(response());
+    const fetcher=coordinatedSearchFetch(upstream,{maxQueued:0,minIntervalMs:1000});
+    await fetcher(target);
+    await expect(fetcher(target)).rejects.toMatchObject({status:503});
+    await vi.advanceTimersByTimeAsync(1000);await fetcher(target);expect(upstream).toHaveBeenCalledTimes(2);
+  });
+  it.each([-1,1.5,10001,NaN,Infinity])('rejects invalid queue limits (%s)',maxQueued=>{
+    expect(()=>coordinatedSearchFetch(vi.fn(),{maxQueued})).toThrow('traffic.maxQueued');
+  });
   it('bounds active requests and start spacing independently',async()=>{
     vi.useFakeTimers();const starts:number[]=[];let active=0,peak=0;
     const upstream=vi.fn<typeof fetch>(async()=>{starts.push(Date.now());peak=Math.max(peak,++active);await new Promise(resolve=>setTimeout(resolve,1200));active--;return response();});

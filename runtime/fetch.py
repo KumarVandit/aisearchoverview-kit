@@ -8,7 +8,7 @@ import sys
 import time
 import urllib.parse
 
-from curl_cffi import requests, CurlHttpVersion
+from curl_cffi import requests, CurlHttpVersion, CurlOpt
 
 MAX_BYTES = 4 * 1024 * 1024
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) mgbrowser/0.9.32'
@@ -75,9 +75,14 @@ def request(session, url, deadline):
 def fetch(url, executable):
     checked_url(url)
     executable = str(Path(executable).resolve(strict=True))
+    ip_family = os.environ.get('AI_SEARCH_OVERVIEW_IP_FAMILY', 'auto')
+    if ip_family not in ('auto', 'ipv4', 'ipv6'):
+        raise ValueError('IP family must be auto, ipv4 or ipv6')
+    # libcurl IPRESOLVE: whichever, IPv4, IPv6. Explicit IPv4/IPv6 choices stay fixed.
+    ip_resolve = {'auto': 0, 'ipv4': 1, 'ipv6': 2}[ip_family]
     started = time.monotonic()
     deadline = started + 19
-    session = requests.Session(trust_env=False, http_version=CurlHttpVersion.V1_1, headers={
+    session = requests.Session(trust_env=False, http_version=CurlHttpVersion.V1_1, curl_options={CurlOpt.IPRESOLVE: ip_resolve}, headers={
         'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -85,16 +90,11 @@ def fetch(url, executable):
     })
     try:
         jar = session.cookies.jar
-        homepage = request(session, 'https://www.google.com/', deadline)
-        if access_state(homepage):
-            return classified(homepage)
-        if homepage['status'] != 200:
-            raise DriverError('HOMEPAGE_UNAVAILABLE')
         first = request(session, url, deadline)
         if access_state(first):
             return classified(first)
         result = first
-        metrics = {'homepageStatus': homepage['status'], 'initialStatus': first['status'], 'bootstrapExecuted': False}
+        metrics = {'initialStatus': first['status'], 'bootstrapExecuted': False}
         html = first['body']
         if first['status'] == 200 and 'knitsail' in html and 'var challenge_version=' in html:
             readable = '; '.join(cookie.name + '=' + cookie.value for cookie in jar if not cookie.has_nonstandard_attr('HttpOnly') and not cookie.has_nonstandard_attr('httponly'))
