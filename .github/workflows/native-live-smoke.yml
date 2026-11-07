@@ -1,4 +1,4 @@
-name: Native Linux live smoke
+name: Native session throughput experiment
 on:
   workflow_dispatch:
 permissions:
@@ -29,5 +29,7 @@ jobs:
       - run: npm run build
       - name: Build pinned native runtime
         run: node dist/cli.js setup --python python3
-      - name: Observe seven fresh Austin searches
-        run: node scripts/native-live-smoke.mjs
+      - name: Check session expiry and scope offline
+        run: /tmp/overview-runtime/python/bin/python -m unittest discover -s scripts/test-support -p 'test_session_fetch.py'
+      - name: Observe up to 100 fresh searches over ten minutes
+        run: node scripts/session-throughput-smoke.mjs
